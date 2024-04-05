@@ -8,15 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,13 +28,23 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.TextFieldForAuth
-import com.android.burakgunduz.bitirmeprojesi.landingPage.iconCardColor
+import com.android.burakgunduz.bitirmeprojesi.firebaseAuths.addUserToDatabase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: Int) {
+fun RegisterScreen(
+    navController: NavController,
+    isDarkModeOn: Boolean,
+    iconSize: Int,
+    authParam: FirebaseAuth,
+    db: FirebaseFirestore
+) {
+    var cardShrank by remember { mutableStateOf(false) }
     var nameInputString by remember { mutableStateOf("") }
     var mailRegisterString by remember { mutableStateOf("") }
     var passwordRegisterString by remember { mutableStateOf("") }
+    var confirmPasswordRegisterString by remember { mutableStateOf("") }
     var phoneNumberInputString by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
@@ -48,9 +54,10 @@ fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize
     ) {
         Card(
             modifier = Modifier
-                .fillMaxHeight(0.8f)
-                .fillMaxWidth()
-                .animateContentSize(),
+                .animateContentSize()
+                .offset(y = if (cardShrank) iconSize.dp / 50 else -(iconSize.dp / 150))
+                .fillMaxHeight(if (cardShrank) 0.7f else 0.8f)
+                .fillMaxWidth(),
             shape = AbsoluteRoundedCornerShape(30.dp)
         ) {
             Column(
@@ -62,18 +69,6 @@ fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Card(
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .size(iconSize.dp / 10),
-                        colors = iconCardColor(isDarkModeOn)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.MonetizationOn,
-                            contentDescription = "",
-                            modifier = Modifier.size(iconSize.dp / 8)
-                        )
-                    }
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -86,14 +81,17 @@ fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize
                         )
                     }
                 }
-                TextFieldForAuth(takeAuthValue = nameInputString, labelText = "Name") {
+                TextFieldForAuth(
+                    takeAuthValue = nameInputString,
+                    labelText = "Name"
+                ) {
                     nameInputString = it
                 }
-                TextFieldForAuth(takeAuthValue = mailRegisterString, labelText = "Email") {
+                TextFieldForAuth(
+                    takeAuthValue = mailRegisterString,
+                    labelText = "Email"
+                ) {
                     mailRegisterString = it
-                }
-                TextFieldForAuth(takeAuthValue = passwordRegisterString, labelText = "Password") {
-                    passwordRegisterString = it
                 }
                 TextFieldForAuth(
                     takeAuthValue = phoneNumberInputString,
@@ -101,11 +99,38 @@ fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize
                 ) {
                     phoneNumberInputString = it
                 }
+                TextFieldForAuth(
+                    takeAuthValue = passwordRegisterString,
+                    labelText = "Password"
+                ) {
+                    passwordRegisterString = it
+                }
+                TextFieldForAuth(
+                    takeAuthValue = confirmPasswordRegisterString,
+                    labelText = "Confirm Password"
+                ) {
+                    confirmPasswordRegisterString = it
+                }
+
                 ElevatedButton(onClick = {
-                    Log.e("Register Screen", "Register button clicked")
-                    navController.navigate("loginScreenNav") {
-                        popUpTo("registerScreenNav") {
-                            inclusive = true
+                    if (passwordRegisterString != confirmPasswordRegisterString) {
+                        Log.e("Register Screen", "Passwords do not match")
+                        return@ElevatedButton
+                    } else {
+                        addUserToDatabase(
+                            mailRegisterString,
+                            passwordRegisterString,
+                            nameInputString,
+                            phoneNumberInputString,
+                            authParam,
+                            db
+                        )
+                        Log.e("Register Screen", "Register button clicked")
+                        navController.navigate("feedScreenNav/1") {
+                            popUpTo("registerScreenNav") {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
                         }
                     }
                 }) {
@@ -117,7 +142,10 @@ fun RegisterScreen(navController: NavController, isDarkModeOn: Boolean, iconSize
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Already have an account?")
-                    TextButton(onClick = { navController.navigate("loginScreenNav") }) {
+                    TextButton(onClick = {
+                        navController.navigate("loginScreenNav")
+                        cardShrank = !cardShrank
+                    }) {
                         Text(text = "Login", textDecoration = TextDecoration.Underline)
                     }
                 }

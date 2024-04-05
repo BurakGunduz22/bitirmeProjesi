@@ -74,3 +74,6 @@ val dark_SuccessButton = Color(0xFF75DD70)
 val dark_onSuccessButton = Color(0xFF003907)
 val dark_SuccessButtonContainer = Color(0xFF00530F)
 val dark_onSuccessButtonContainer = Color(0xFF91FA89)
+
+val titleTextColor = Color(0xFF2D0C57)
+val titleTextColorDarkMode = Color(0xFFFFFFFF)

@@ -34,13 +34,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.TextFieldForAuth
 import com.android.burakgunduz.bitirmeprojesi.authKeyboardType
-import com.android.burakgunduz.bitirmeprojesi.getAuth
+import com.android.burakgunduz.bitirmeprojesi.colors.successButtonColor
+import com.android.burakgunduz.bitirmeprojesi.firebaseAuths.getAuth
 import com.android.burakgunduz.bitirmeprojesi.landingPage.iconCardColor
-import com.android.burakgunduz.bitirmeprojesi.successButtonColor
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
-fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: Int) {
+fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: Int,authParam: FirebaseAuth) {
+    var cardExpanded by remember { mutableStateOf(false) }
     var mailInputString by remember { mutableStateOf("") }
     var passwordInputString by remember { mutableStateOf("") }
     Column(
@@ -51,10 +53,10 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
     ) {
         Card(
             modifier = Modifier
-                .offset(y = iconSize.dp / 50)
-                .fillMaxHeight(0.7f)
-                .fillMaxWidth()
-                .animateContentSize(),
+                .animateContentSize()
+                .offset(y = if (cardExpanded) -(iconSize.dp / 150) else iconSize.dp / 50)
+                .fillMaxHeight(if (cardExpanded) 0.8f else 0.7f)
+                .fillMaxWidth(),
             shape = AbsoluteRoundedCornerShape(30.dp)
         ) {
             Column(
@@ -107,7 +109,7 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                 Button(
                     onClick = {
                         Log.e("LoginScreen", "Login button clicked")
-                        getAuth(mailInputString, passwordInputString)
+                        getAuth(mailInputString, passwordInputString,authParam)
                         navController.navigate("feedScreenNav/resim") {
                             popUpTo("loginScreenNav") {
                                 inclusive = true
@@ -128,7 +130,10 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Don't you have an account?")
-                    TextButton(onClick = { navController.navigate("registerScreenNav") }) {
+                    TextButton(onClick = {
+                        navController.navigate("registerScreenNav")
+                        cardExpanded = !cardExpanded
+                    }) {
                         Text(text = "Sign Up", textDecoration = TextDecoration.Underline)
                     }
                 }

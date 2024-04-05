@@ -1,7 +1,6 @@
 package com.android.burakgunduz.bitirmeprojesi
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -12,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +29,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -44,8 +40,6 @@ import com.android.burakgunduz.bitirmeprojesi.landingPage.LandingPage
 import com.android.burakgunduz.bitirmeprojesi.loginScreen.LoginScreen
 import com.android.burakgunduz.bitirmeprojesi.registerScreen.RegisterScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.AppTheme
-import com.android.burakgunduz.bitirmeprojesi.ui.theme.SuccessButton
-import com.android.burakgunduz.bitirmeprojesi.ui.theme.dark_SuccessButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -106,12 +100,12 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
         composable(
             "loginScreenNav"
         ) {
-            LoginScreen(navController, isDarkModeOn, iconSize)
+            LoginScreen(navController, isDarkModeOn, iconSize, auth)
         }
         composable(
             "registerScreenNav"
         ) {
-            RegisterScreen(navController, isDarkModeOn, iconSize)
+            RegisterScreen(navController, isDarkModeOn, iconSize, auth, db)
         }
         composable(
             "landingPageNav"
@@ -124,46 +118,6 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
     }
 }
 
-
-fun getAuth(email: String, password: String) {
-    val addOnCompleteListener = auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                // Sign in success, update UI with the signed-in user's information
-                Log.d("LoginSuccess", "signInWithEmail:success")
-                val user = auth.currentUser
-
-            } else {
-                // If sign in fails, display a message to the user.
-                Log.w("LoginFail", "signInWithEmail:failure", task.exception)
-
-            }
-        }
-}
-fun addUserToDatabase(email: String, password: String) {
-    val addOnCompleteListener = auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                // Sign in success, update UI with the signed-in user's information
-                Log.d("RegisterSuccess", "createUserWithEmail:success")
-                val user = auth.currentUser
-
-            } else {
-                // If sign in fails, display a message to the user.
-                Log.w("RegisterFail", "createUserWithEmail:failure", task.exception)
-
-            }
-        }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ScreenPreview() {
-    AppTheme {
-        OpeningScreen(isDarkModeOn = true, onDarkModeToggle = {})
-    }
-}
-
 @Composable
 fun BackgroundImage() {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -172,7 +126,10 @@ fun BackgroundImage() {
             contentDescription = "Background Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.background, blendMode = BlendMode.Overlay)
+            colorFilter = ColorFilter.tint(
+                MaterialTheme.colorScheme.background,
+                blendMode = BlendMode.Overlay
+            )
         )
     }
 }
@@ -189,14 +146,5 @@ fun DarkModeToggle(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
                 Icons.Filled.DarkMode
             }, contentDescription = "isDarkModeOn"
         )
-    }
-}
-
-@Composable
-fun successButtonColor(isDarkModeOn: Boolean): ButtonColors {
-    return if (isDarkModeOn) {
-        ButtonDefaults.buttonColors(containerColor = dark_SuccessButton)
-    } else {
-        ButtonDefaults.buttonColors(containerColor = SuccessButton)
     }
 }
