@@ -125,13 +125,18 @@ fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                         fontWeight = FontWeight.ExtraBold,
                     )
                 }
+                Button(onClick = { navController.navigate("feedScreenNav/1") }) {
+                    Text(text = "FeedScreen")
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Already have an account?")
-                    TextButton(onClick = { navController.navigate("loginScreenNav") }) {
+                    TextButton(onClick = {
+                        navController.navigate("loginScreenNav")
+                    }) {
                         Text(text = "Login", textDecoration = TextDecoration.Underline)
                     }
                 }

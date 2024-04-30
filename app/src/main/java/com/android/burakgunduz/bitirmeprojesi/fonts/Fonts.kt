@@ -11,3 +11,11 @@ val archivoFonts = FontFamily(
     Font(R.font.archivo_semibold, FontWeight.SemiBold),
     Font(R.font.archivo_extrabold, FontWeight.ExtraBold)
 )
+val robotoFonts = FontFamily(
+    Font(R.font.roboto_thin, FontWeight.Thin),
+    Font(R.font.roboto_regular, FontWeight.Normal),
+    Font(R.font.roboto_medium, FontWeight.Medium),
+    Font(R.font.roboto_bold, FontWeight.Bold),
+    Font(R.font.roboto_black, FontWeight.Black),
+    Font(R.font.roboto_light, FontWeight.Light),
+)

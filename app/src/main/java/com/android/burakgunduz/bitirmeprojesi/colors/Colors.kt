@@ -27,3 +27,12 @@ fun titleTextColorChanger(isDarkModeOn: Boolean): Color {
         titleTextColor
     }
 }
+
+@Composable
+fun itemTitleTextColorChanger(isDarkModeOn: Boolean): Color {
+    return if (isDarkModeOn) {
+        Color.Gray
+    } else {
+        Color.White
+    }
+}

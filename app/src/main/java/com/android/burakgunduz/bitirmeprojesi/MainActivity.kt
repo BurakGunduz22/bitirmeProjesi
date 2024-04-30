@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +49,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 
 private lateinit var auth: FirebaseAuth
-var storage = Firebase.storage("gs://bitirmeprojesi-1b1e7.appspot.com")
+var storage = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
 var storageRef = storage.reference
 
 class MainActivity : ComponentActivity() {
@@ -58,7 +60,7 @@ class MainActivity : ComponentActivity() {
             var isDarkModeOn by remember { mutableStateOf(true) }
             AppTheme(useDarkTheme = isDarkModeOn) {
                 // A surface container using the 'background' color from the theme
-                Scaffold { it ->
+                Scaffold(bottomBar = { }) { it ->
                     Surface(
                         modifier = Modifier
                             .fillMaxSize()
@@ -68,6 +70,7 @@ class MainActivity : ComponentActivity() {
                                 contentScale = ContentScale.FillWidth
                             ),
                         color = MaterialTheme.colorScheme.background
+
                     ) {
                         BackgroundImage()
                         OpeningScreen(
@@ -85,17 +88,24 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
-    var db = Firebase.firestore
+    val db = Firebase.firestore
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val iconSize = (configuration.screenWidthDp.dp * density.density).value.toInt()
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "landingPageNav") {
+    var startNavigateScreen by remember { mutableStateOf("") }
+    var userInfosFar by remember { mutableStateOf(auth.currentUser?.email.toString()) }
+    if (auth.currentUser != null) {
+        startNavigateScreen = "feedScreenNav/${auth.currentUser!!.uid}"
+    } else if (auth.currentUser == null) {
+        startNavigateScreen = "landingPageNav"
+    }
+    NavHost(navController = navController, startDestination = startNavigateScreen) {
         composable(
             "feedScreenNav/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) {
-            FeedScreen(storageRef, navController)
+            FeedScreen(storageRef,db, navController)
         }
         composable(
             "loginScreenNav"
@@ -114,6 +124,12 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
         }
     }
     Row {
+        Button(onClick = {
+            auth.signOut()
+            navController.navigate("landingPageNav")
+        }) {
+            Text(text = userInfosFar)
+        }
         DarkModeToggle(isDarkModeOn = isDarkModeOn, onDarkModeToggle = onDarkModeToggle)
     }
 }
