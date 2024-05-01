@@ -38,6 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.android.burakgunduz.bitirmeprojesi.feedScreen.FeedScreen
+import com.android.burakgunduz.bitirmeprojesi.itemDetailsPage.ItemDetailsPage
 import com.android.burakgunduz.bitirmeprojesi.landingPage.LandingPage
 import com.android.burakgunduz.bitirmeprojesi.loginScreen.LoginScreen
 import com.android.burakgunduz.bitirmeprojesi.registerScreen.RegisterScreen
@@ -105,7 +106,7 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
             "feedScreenNav/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) {
-            FeedScreen(storageRef,db, navController)
+            FeedScreen(storageRef, db, navController, isDarkModeOn)
         }
         composable(
             "loginScreenNav"
@@ -121,6 +122,14 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
             "landingPageNav"
         ) {
             LandingPage(navController, isDarkModeOn, iconSize)
+        }
+        composable(
+            "itemDetailsPageNav/{itemId}",
+            arguments = listOf(
+                navArgument("itemId") { type = NavType.StringType }
+            )
+        ) {
+            ItemDetailsPage(it, db, storageRef)
         }
     }
     Row {

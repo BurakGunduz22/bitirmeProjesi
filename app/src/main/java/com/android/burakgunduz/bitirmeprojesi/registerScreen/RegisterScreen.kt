@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.TextFieldForAuth
+import com.android.burakgunduz.bitirmeprojesi.authKeyboardType
 import com.android.burakgunduz.bitirmeprojesi.firebaseAuths.addUserToDatabase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -89,25 +90,29 @@ fun RegisterScreen(
                 }
                 TextFieldForAuth(
                     takeAuthValue = mailRegisterString,
-                    labelText = "Email"
+                    labelText = "Email",
+                    authKeyboardType("email")
                 ) {
                     mailRegisterString = it
                 }
                 TextFieldForAuth(
                     takeAuthValue = phoneNumberInputString,
-                    labelText = "Phone Number"
+                    labelText = "Phone Number",
+                    authKeyboardType("phone")
                 ) {
                     phoneNumberInputString = it
                 }
                 TextFieldForAuth(
                     takeAuthValue = passwordRegisterString,
-                    labelText = "Password"
+                    labelText = "Password",
+                    authKeyboardType("password")
                 ) {
                     passwordRegisterString = it
                 }
                 TextFieldForAuth(
                     takeAuthValue = confirmPasswordRegisterString,
-                    labelText = "Confirm Password"
+                    labelText = "Confirm Password",
+                    authKeyboardType("password")
                 ) {
                     confirmPasswordRegisterString = it
                 }

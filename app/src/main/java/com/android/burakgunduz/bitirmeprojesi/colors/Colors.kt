@@ -36,3 +36,11 @@ fun itemTitleTextColorChanger(isDarkModeOn: Boolean): Color {
         Color.White
     }
 }
+@Composable
+fun itemSubTitleTextColorChanger(isDarkModeOn: Boolean): Color {
+    return if (isDarkModeOn) {
+        Color(0xFF4B4949)
+    } else {
+        Color(0xFFA5A5A5)
+    }
+}
