@@ -9,7 +9,8 @@ val archivoFonts = FontFamily(
     Font(R.font.archivo_thin, FontWeight.Thin),
     Font(R.font.archivo_regular, FontWeight.Normal),
     Font(R.font.archivo_semibold, FontWeight.SemiBold),
-    Font(R.font.archivo_extrabold, FontWeight.ExtraBold)
+    Font(R.font.archivo_extrabold, FontWeight.ExtraBold),
+    Font(R.font.archivo_medium, FontWeight.Medium)
 )
 val robotoFonts = FontFamily(
     Font(R.font.roboto_thin, FontWeight.Thin),

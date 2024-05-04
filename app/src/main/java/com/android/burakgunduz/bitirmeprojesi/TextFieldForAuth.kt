@@ -57,7 +57,12 @@ fun TextFieldForAuth(
             }
 
         },
-        modifier = Modifier.padding(start = 40.dp, end = 40.dp, top = 10.dp, bottom = 10.dp),
+        modifier = Modifier.padding(
+            start = 40.dp,
+            end = 40.dp,
+            top = 10.dp,
+            bottom = 10.dp
+        ),
         onValueChange = {
             authValue = it
             onAuthValueChange(authValue)

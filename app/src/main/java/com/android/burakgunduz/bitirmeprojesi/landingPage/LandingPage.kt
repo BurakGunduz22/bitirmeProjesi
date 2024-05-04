@@ -93,7 +93,7 @@ fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                             fontFamily = archivoFonts,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = -(2.sp),
-                            color = titleTextColorChanger(isDarkModeOn)
+                            color = titleTextColorChanger(isDarkModeOn),
                         )
                         Text(
                             text = "Turn clutter into cash. Effortless selling, endless possibilities.",

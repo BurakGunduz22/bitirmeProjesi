@@ -95,7 +95,7 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
     val iconSize = (configuration.screenWidthDp.dp * density.density).value.toInt()
     val navController = rememberNavController()
     var startNavigateScreen by remember { mutableStateOf("") }
-    var userInfosFar by remember { mutableStateOf(auth.currentUser?.email.toString()) }
+    val userInfosFar by remember { mutableStateOf(auth.currentUser?.email.toString()) }
     if (auth.currentUser != null) {
         startNavigateScreen = "feedScreenNav/${auth.currentUser!!.uid}"
     } else if (auth.currentUser == null) {
@@ -129,10 +129,10 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
                 navArgument("itemId") { type = NavType.StringType }
             )
         ) {
-            ItemDetailsPage(it, db, storageRef)
+            ItemDetailsPage(it, db, storageRef,navController)
         }
     }
-    Row {
+    Row(modifier = Modifier.padding(start = 300.dp)) {
         Button(onClick = {
             auth.signOut()
             navController.navigate("landingPageNav")
