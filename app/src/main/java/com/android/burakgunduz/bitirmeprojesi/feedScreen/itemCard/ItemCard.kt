@@ -1,6 +1,5 @@
 package com.android.burakgunduz.bitirmeprojesi.feedScreen.itemCard
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,15 +28,12 @@ import coil.compose.SubcomposeAsyncImage
 import com.android.burakgunduz.bitirmeprojesi.colors.itemSubTitleTextColorChanger
 import com.android.burakgunduz.bitirmeprojesi.colors.itemTitleTextColorChanger
 import com.android.burakgunduz.bitirmeprojesi.fonts.robotoFonts
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.StorageReference
+import com.android.burakgunduz.bitirmeprojesi.itemViewModel.ItemCard
 
 
 @Composable
 fun ItemCard(
-    storageRef: StorageReference,
-    db: FirebaseFirestore,
-    documentId: String,
+    itemCardValue: ItemCard,
     imageUrl: String,
     isDarkModeOn: Boolean,
     navController: NavController
@@ -49,64 +44,40 @@ fun ItemCard(
         1f to Color.Black
     )
     val isLoaded = remember { mutableStateOf(false) }
-    val dbDetails = db.collection("itemsOnSale").document(documentId)
     val itemPrice = remember { mutableStateOf<Int?>(0) }
     val userDataList =
         remember { mutableListOf<String>("itemName", "itemCategory", "itemTown") }
-    LaunchedEffect(dbDetails) {
-        dbDetails.get()
-            .addOnSuccessListener { document ->
-                if (document != null) {
-                    for (i in userDataList.indices) {
-                        userDataList[i] = document.getString(userDataList[i])!!
-                        Log.e("ItemCard", "ItemCard: ${userDataList[i]}")
-                        isLoaded.value = true
-                    }
-                    itemPrice.value = document.getDouble("itemPrice")!!.toInt()
-                } else {
-                    // The document does not exist
-                    println("No such document")
-                }
-            }
-            .addOnFailureListener { exception ->
-                // An error occurred while retrieving the document
-                println("Error getting document: $exception")
-            }
-    }
-    if (isLoaded.value) {
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .size(200.dp, 250.dp)
-                .padding(10.dp)
-                .clickable { navController.navigate("itemDetailsPageNav/{$documentId}") }
-        ) {
-            Box(
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth(0.95f)
+            .size(200.dp, 250.dp)
+            .padding(10.dp)
+            .clickable { navController.navigate("itemDetailsPageNav/{${itemCardValue.itemID}}") }
+    ) {
+        Box(
 
-            ) {
-                if (imageUrl.isNotEmpty()) {
-                    Log.e("FeedScreen", "FeedScreen: $imageUrl")
-                    SubcomposeAsyncImage(
-                        model = imageUrl,
-                        contentDescription = "Item Image",
-                        contentScale = ContentScale.FillWidth
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Brush.verticalGradient(colorStops = colorStops))
-                    )
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Bottom,
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        TitleText(userDataList[0], isDarkModeOn)
-                        Row {
-                            SubTitletext(userDataList[1], isDarkModeOn, 10)
-                            SubTitletext("•", isDarkModeOn, 5)
-                            SubTitletext(userDataList[2], isDarkModeOn, 5)
-                        }
+        ) {
+            if (imageUrl.isNotEmpty()) {
+                SubcomposeAsyncImage(
+                    model = imageUrl,
+                    contentDescription = "Item Image",
+                    contentScale = ContentScale.FillWidth
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Brush.verticalGradient(colorStops = colorStops))
+                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    TitleText(itemCardValue.itemName, isDarkModeOn)
+                    Row {
+                        SubTitletext(itemCardValue.itemCategory, isDarkModeOn, 10)
+                        SubTitletext("•", isDarkModeOn, 5)
+                        SubTitletext(itemCardValue.itemTown, isDarkModeOn, 5)
                     }
                 }
             }

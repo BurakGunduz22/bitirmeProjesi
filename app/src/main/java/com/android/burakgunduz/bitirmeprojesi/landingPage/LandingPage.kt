@@ -125,9 +125,7 @@ fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                         fontWeight = FontWeight.ExtraBold,
                     )
                 }
-                Button(onClick = { navController.navigate("feedScreenNav/1") }) {
-                    Text(text = "FeedScreen")
-                }
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,

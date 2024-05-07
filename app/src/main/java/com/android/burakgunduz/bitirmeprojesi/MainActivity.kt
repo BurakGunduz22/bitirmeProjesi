@@ -1,6 +1,9 @@
 package com.android.burakgunduz.bitirmeprojesi
 
+import android.Manifest.permission.READ_MEDIA_IMAGES
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -32,6 +35,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -39,7 +44,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.android.burakgunduz.bitirmeprojesi.feedScreen.FeedScreen
 import com.android.burakgunduz.bitirmeprojesi.itemDetailsPage.ItemDetailsPage
+import com.android.burakgunduz.bitirmeprojesi.itemViewModel.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.landingPage.LandingPage
+import com.android.burakgunduz.bitirmeprojesi.listItemForSale.ListItemScreen
 import com.android.burakgunduz.bitirmeprojesi.loginScreen.LoginScreen
 import com.android.burakgunduz.bitirmeprojesi.registerScreen.RegisterScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.AppTheme
@@ -54,9 +61,15 @@ var storage = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
 var storageRef = storage.reference
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (ContextCompat.checkSelfPermission(this, READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+            Log.d("Hop", "ListItemScreen: Permission not granted")
+            ActivityCompat.requestPermissions(this, arrayOf(READ_MEDIA_IMAGES),0)
+        }
         auth = Firebase.auth
+        val viewModel = ItemViewModel()
         setContent {
             var isDarkModeOn by remember { mutableStateOf(true) }
             AppTheme(useDarkTheme = isDarkModeOn) {
@@ -76,7 +89,8 @@ class MainActivity : ComponentActivity() {
                         BackgroundImage()
                         OpeningScreen(
                             isDarkModeOn = isDarkModeOn,
-                            onDarkModeToggle = { isDarkModeOn = it })
+                            onDarkModeToggle = { isDarkModeOn = it },
+                            viewModel = viewModel)
                     }
                 }
             }
@@ -88,7 +102,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
+fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit,viewModel: ItemViewModel) {
     val db = Firebase.firestore
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -106,7 +120,7 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
             "feedScreenNav/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) {
-            FeedScreen(storageRef, db, navController, isDarkModeOn)
+            FeedScreen(storageRef, db, navController, isDarkModeOn,viewModel)
         }
         composable(
             "loginScreenNav"
@@ -129,10 +143,19 @@ fun OpeningScreen(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
                 navArgument("itemId") { type = NavType.StringType }
             )
         ) {
-            ItemDetailsPage(it, db, storageRef,navController)
+            ItemDetailsPage(it,navController,viewModel)
+        }
+        composable("listItemScreenNav") {
+            ListItemScreen(viewModel)
         }
     }
-    Row(modifier = Modifier.padding(start = 300.dp)) {
+    Row(modifier = Modifier.padding(start = 10.dp)) {
+        Button(onClick = { navController.navigate("feedScreenNav/1") }) {
+            Text(text = "FeedScreen")
+        }
+        Button(onClick = { navController.navigate("listItemScreenNav") }) {
+            Text(text = "List Item for Sale")
+        }
         Button(onClick = {
             auth.signOut()
             navController.navigate("landingPageNav")

@@ -1,6 +1,5 @@
 package com.android.burakgunduz.bitirmeprojesi.feedScreen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,8 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.feedScreen.itemCard.ItemCard
-import com.google.firebase.appcheck.internal.util.Logger.TAG
-import com.google.firebase.firestore.DocumentSnapshot
+import com.android.burakgunduz.bitirmeprojesi.itemViewModel.ItemViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
 
@@ -26,45 +24,36 @@ fun FeedScreen(
     storageRef: StorageReference,
     db: FirebaseFirestore,
     navController: NavController,
-    isDarkModeOn: Boolean
+    isDarkModeOn: Boolean,
+    viewModel: ItemViewModel
 ) {
     val userId: String = navController.currentBackStackEntry
         ?.arguments?.getString("userId") ?: return
+   val itemsOnSale = viewModel.itemsOnSale.value
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        val items = remember { mutableStateOf(listOf<DocumentSnapshot>()) }
         val dataLoaded = remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
-            db.collection("itemsOnSale")
-                .get()
-                .addOnSuccessListener { result ->
-                    items.value = result.documents
-                    dataLoaded.value = true
-                }
-                .addOnFailureListener { exception ->
-                    Log.w(TAG, "Error getting documents.", exception)
-                }
+            viewModel.loadItems()
         }
-        if (dataLoaded.value) {
+        if (itemsOnSale != null) {
             LazyColumn(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                itemsIndexed(items.value) { index, document ->
+                itemsIndexed(itemsOnSale!!) { index, document ->
                     val imageUrl = remember { mutableStateOf("") }
-                    LaunchedEffect(key1 = document) {
-                        val storageRefer = storageRef.child("/itemImages/${document.id}/0.png")
+                    LaunchedEffect(document) {
+                        val storageRefer = storageRef.child("/itemImages/${document.itemID}/0.png")
                         storageRefer.downloadUrl.addOnSuccessListener {
                             imageUrl.value = it.toString()
                         }
                     }
                     if (imageUrl.value != "") {
                         ItemCard(
-                            storageRef,
-                            db,
-                            document.id,
+                            document,
                             imageUrl.value,
                             isDarkModeOn,
                             navController
