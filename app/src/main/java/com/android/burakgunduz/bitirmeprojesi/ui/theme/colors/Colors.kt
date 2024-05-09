@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.colors
+package com.android.burakgunduz.bitirmeprojesi.ui.theme.colors
 
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults

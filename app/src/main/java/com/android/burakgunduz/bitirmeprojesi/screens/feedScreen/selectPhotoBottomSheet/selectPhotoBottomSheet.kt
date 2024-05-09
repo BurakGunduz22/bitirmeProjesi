@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.feedScreen.selectPhotoBottomSheet
+package com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.selectPhotoBottomSheet
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet

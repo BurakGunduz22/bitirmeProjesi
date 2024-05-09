@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.loginScreen
+package com.android.burakgunduz.bitirmeprojesi.screens.loginScreen
 
 import android.util.Log
 import androidx.compose.animation.animateContentSize
@@ -14,8 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,23 +27,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.android.burakgunduz.bitirmeprojesi.MainButtonForAuth
 import com.android.burakgunduz.bitirmeprojesi.TextFieldForAuth
 import com.android.burakgunduz.bitirmeprojesi.authKeyboardType
-import com.android.burakgunduz.bitirmeprojesi.colors.successButtonColor
 import com.android.burakgunduz.bitirmeprojesi.firebaseAuths.getAuth
-import com.android.burakgunduz.bitirmeprojesi.landingPage.iconCardColor
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
+import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.iconCardColor
 import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
-fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: Int,authParam: FirebaseAuth) {
+fun LoginScreen(
+    navController: NavController,
+    isDarkModeOn: Boolean,
+    iconSize: Int,
+    authParam: FirebaseAuth
+) {
     var cardExpanded by remember { mutableStateOf(false) }
     var mailInputString by remember { mutableStateOf("") }
     var passwordInputString by remember { mutableStateOf("") }
+    val invalidUserInfo = remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -75,20 +82,23 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                         colors = iconCardColor(isDarkModeOn)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.MonetizationOn,
+                            imageVector = Icons.Outlined.Person,
                             contentDescription = "",
                             modifier = Modifier.size(iconSize.dp / 8)
                         )
                     }
                     Column(
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = iconSize.dp / 25)
-                    ) {
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier.fillMaxWidth()
+                        ) {
                         Text(
-                            text = "New Way of Shopping",
+                            text = "Login",
+                            fontFamily = archivoFonts,
+                            fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Left
+                            textAlign = TextAlign.Left,
+                            modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 10.dp)
                         )
                     }
                 }
@@ -102,25 +112,25 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                 TextFieldForAuth(
                     takeAuthValue = passwordInputString,
                     labelText = "Password",
-                    authKeyboardType("password")
+                    authKeyboardType("password"),
+                    fieldSpace = 30,
                 ) {
                     passwordInputString = it
                 }
-                Button(
-                    onClick = {
-                        Log.e("LoginScreen", "Login button clicked")
-                        getAuth(mailInputString, passwordInputString,authParam)
-                        navController.navigate("feedScreenNav/resim") {
-                            popUpTo("loginScreenNav") {
-                                inclusive = true
-                            }
-                        }
+
+                MainButtonForAuth(
+                    action = {
+                        login(
+                            mailInputString,
+                            passwordInputString,
+                            authParam,
+                            navController,
+                            invalidUserInfo.value
+                        )
                     },
-                    colors = successButtonColor(isDarkModeOn = isDarkModeOn),
-                    shape = AbsoluteRoundedCornerShape(10.dp)
-                ) {
-                    Text(text = "Login")
-                }
+                    isDarkModeOn = isDarkModeOn,
+                    buttonText = "LOGIN"
+                )
                 TextButton(onClick = { /*TODO*/ }) {
                     Text(text = "Forgot Password?")
                 }
@@ -140,4 +150,35 @@ fun LoginScreen(navController: NavController, isDarkModeOn: Boolean, iconSize: I
             }
         }
     }
+}
+
+fun login(
+    mailInputString: String,
+    passwordInputString: String,
+    authParam: FirebaseAuth,
+    navController: NavController,
+    invalidUserInfo: Boolean
+) {
+
+    getAuth(
+        mailInputString,
+        passwordInputString,
+        authParam,
+    ) {
+        if (!it) {
+            Log.e("LoginScreen", "Login button clicked")
+            navController.navigate("feedScreenNav/1") {
+                popUpTo("loginScreenNav") {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        } else {
+            Log.e("LoginScreen", "Invalid user info")
+        }
+    }
+    Log.e(
+        "InvalidInfo",
+        "$invalidUserInfo This is the value of invalidUserInfo"
+    )
 }

@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.feedScreen.itemCard
+package com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.itemCard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
-import com.android.burakgunduz.bitirmeprojesi.colors.itemSubTitleTextColorChanger
-import com.android.burakgunduz.bitirmeprojesi.colors.itemTitleTextColorChanger
-import com.android.burakgunduz.bitirmeprojesi.fonts.robotoFonts
-import com.android.burakgunduz.bitirmeprojesi.itemViewModel.ItemCard
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.itemSubTitleTextColorChanger
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.itemTitleTextColorChanger
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.robotoFonts
+import com.android.burakgunduz.bitirmeprojesi.ViewModels.ItemCard
 
 
 @Composable

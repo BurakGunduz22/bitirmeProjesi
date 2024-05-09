@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.landingPage
+package com.android.burakgunduz.bitirmeprojesi.screens.landingPage
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -36,9 +35,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.android.burakgunduz.bitirmeprojesi.colors.successButtonColor
-import com.android.burakgunduz.bitirmeprojesi.colors.titleTextColorChanger
-import com.android.burakgunduz.bitirmeprojesi.fonts.archivoFonts
+import com.android.burakgunduz.bitirmeprojesi.MainButtonForAuth
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.titleTextColorChanger
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 
 @Composable
 fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: Int) {
@@ -105,27 +104,14 @@ fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: I
                         )
                     }
                 }
-                Button(
-                    onClick = {
-                        navController.navigate("registerScreenNav") {
-                            popUpTo("landingScreenNav") {
-                                inclusive = true
-                            }
+                MainButtonForAuth(action = {
+                    navController.navigate("registerScreenNav") {
+                        popUpTo("landingScreenNav") {
+                            inclusive = true
                         }
-                        cardExpanded = !cardExpanded
-                    },
-                    colors = successButtonColor(isDarkModeOn = isDarkModeOn),
-                    shape = AbsoluteRoundedCornerShape(7.dp),
-                    modifier = Modifier.size(350.dp, 50.dp),
-                ) {
-                    Text(
-                        text = "CREATE AN ACCOUNT",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontFamily = archivoFonts,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                }
-
+                    }
+                    cardExpanded = !cardExpanded
+                }, isDarkModeOn = isDarkModeOn, buttonText = "CREATE AN ACCOUNT")
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,

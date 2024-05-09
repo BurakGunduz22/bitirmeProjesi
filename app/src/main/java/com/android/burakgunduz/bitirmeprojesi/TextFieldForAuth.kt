@@ -1,6 +1,7 @@
 package com.android.burakgunduz.bitirmeprojesi
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,6 +27,8 @@ fun TextFieldForAuth(
     takeAuthValue: String,
     labelText: String,
     keyboardOpt: KeyboardOptions = KeyboardOptions.Default,
+    fieldSpace: Int = 10,
+    fieldSize: Int = 350,
     onAuthValueChange: (String) -> Unit,
 ) {
     var isPasswordVisible by remember { mutableStateOf(false) }
@@ -57,12 +60,14 @@ fun TextFieldForAuth(
             }
 
         },
-        modifier = Modifier.padding(
-            start = 40.dp,
-            end = 40.dp,
-            top = 10.dp,
-            bottom = 10.dp
-        ),
+        modifier = Modifier
+            .padding(
+                start = 10.dp,
+                end = 10.dp,
+                top = 10.dp,
+                bottom = fieldSpace.dp
+            )
+            .size(fieldSize.dp, 65.dp),
         onValueChange = {
             authValue = it
             onAuthValueChange(authValue)

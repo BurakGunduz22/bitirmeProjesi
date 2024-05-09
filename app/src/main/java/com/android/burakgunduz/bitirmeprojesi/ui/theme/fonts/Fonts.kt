@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.fonts
+package com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts
 
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
