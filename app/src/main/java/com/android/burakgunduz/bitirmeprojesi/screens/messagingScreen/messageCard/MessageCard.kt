@@ -1,5 +1,6 @@
-package com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.itemCard
+package com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.messageCard
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,31 +27,40 @@ import coil.compose.SubcomposeAsyncImage
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.itemSubTitleTextColorChanger
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.itemTitleTextColorChanger
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.robotoFonts
-import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemCard
+import com.android.burakgunduz.bitirmeprojesi.viewModels.Message
 
 
 @Composable
-fun ItemCard(
-    itemCardValue: ItemCard,
+fun MessageCard(
+    messageCardValue: Message,
     imageUrl: String,
     isDarkModeOn: Boolean,
-    navController: NavController
+    navController: NavController,
+    userIDInfo: String?
 ) {
     val colorStops = arrayOf(
         0.0f to Color.hsl(0f, 0f, 0f, 0f),
         0.4f to Color.hsl(0f, 0f, 0.1f, 0.1f),
         1f to Color.Black
     )
-    val isLoaded = remember { mutableStateOf(false) }
-    val itemPrice = remember { mutableStateOf<Int?>(0) }
-    val userDataList =
-        remember { mutableListOf<String>("itemName", "itemCategory", "itemTown") }
+    val itemID = messageCardValue.itemID
+    val userID = if (messageCardValue.senderID == userIDInfo) {
+        messageCardValue.senderID
+    } else {
+        messageCardValue.receiverID
+    }
+    val conversationUserID = if (messageCardValue.senderID == userID) {
+        messageCardValue.receiverID
+    } else {
+        messageCardValue.senderID
+    }
+    Log.e("MessageCard", "MessageCard: $userID $itemID $conversationUserID")
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth(0.95f)
             .size(200.dp, 250.dp)
             .padding(10.dp)
-            .clickable { navController.navigate("itemDetailsPageNav/${itemCardValue.itemID}") }
+            .clickable { navController.navigate("directMessageToSeller/$userID&$itemID&$conversationUserID") }
     ) {
         Box(
 
@@ -73,12 +81,16 @@ fun ItemCard(
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.Start
                 ) {
-                    TitleText(itemCardValue.itemName, isDarkModeOn)
+                    TitleText(messageCardValue.itemID, isDarkModeOn)
                     Row {
-                        SubTitletext(itemCardValue.itemCategory, isDarkModeOn, 10)
+                        SubTitletext(
+                            messageCardValue.timestamp.toDate().toString(),
+                            isDarkModeOn,
+                            10
+                        )
                         SubTitletext("•", isDarkModeOn, 5)
-                        SubTitletext(itemCardValue.itemTown, isDarkModeOn, 5)
                     }
+                    SubTitletext(messageCardValue.message, isDarkModeOn, 10)
                 }
             }
         }

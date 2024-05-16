@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.photoCard
+package com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components
 
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -18,10 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -51,7 +52,7 @@ fun PhotoCard(index: Uri, indexCount: Int) {
                         var newOffset = offset.toOffset()
                         newOffset += dragAmount
                         offset = newOffset.round()
-                        change.consumePositionChange()
+                        if (change.positionChange() != Offset.Zero) change.consume()
                     }
                 },
         ) {

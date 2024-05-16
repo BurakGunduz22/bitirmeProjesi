@@ -2,13 +2,17 @@ package com.android.burakgunduz.bitirmeprojesi.screens.feedScreen
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,7 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.itemCard.ItemCard
-import com.android.burakgunduz.bitirmeprojesi.ViewModels.ItemViewModel
+import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
 
@@ -26,17 +31,29 @@ fun FeedScreen(
     db: FirebaseFirestore,
     navController: NavController,
     isDarkModeOn: Boolean,
-    viewModel: ItemViewModel
+    viewModel: ItemViewModel,
+    userInfo: MutableState<String?>,
+    auth: FirebaseAuth
 ) {
+    if (userInfo.value == null) {
+        userInfo.value = auth.currentUser?.uid
+    }
    val itemsOnSale = viewModel.itemsOnSale.observeAsState().value
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
+        Column {
+            Row {
+                Text(text = "Feed Screen")
+            }
+
+        }
+
         val dataLoaded = remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
             viewModel.loadItems()
         }
-        Log.e("FeedScreen", "FeedScreen: ${itemsOnSale}")
+        Log.e("FeedScreen", "FeedScreen: $itemsOnSale}")
         if (itemsOnSale != null) {
             LazyColumn(
                 verticalArrangement = Arrangement.Center,

@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.android.burakgunduz.bitirmeprojesi"
-        minSdk = 33
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -48,7 +48,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    buildToolsVersion = "35.0.0 rc2"
+    buildToolsVersion = "35.0.0 rc3"
 }
 
 dependencies {
@@ -65,16 +65,20 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.6.7")
     implementation("androidx.compose.runtime:runtime-rxjava3:1.6.7")
     implementation ("androidx.compose.material:material-icons-extended:1.6.7")
-    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("io.coil-kt:coil-compose:2.5.0")
-    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.google.maps.android:maps-compose:5.0.1")
     implementation ("com.google.android.gms:play-services-maps:18.2.0")
     implementation ("com.google.android.gms:play-services-location:21.2.0")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-appcheck:18.0.0")
     implementation(libs.androidx.media3.common)
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

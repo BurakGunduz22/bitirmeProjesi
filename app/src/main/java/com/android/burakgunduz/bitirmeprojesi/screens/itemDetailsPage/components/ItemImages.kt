@@ -1,8 +1,12 @@
 package com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components
 
+import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,26 +27,35 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
-import com.android.burakgunduz.bitirmeprojesi.ViewModels.NamedUri
+import coil.compose.SubcomposeAsyncImageContent
+import com.android.burakgunduz.bitirmeprojesi.viewModels.NamedUri
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -60,11 +73,20 @@ fun ImagePager(
         0.0f to Color.hsl(0f, 0f, 0f, 0f),
         0.0f to Color.hsl(0f, 0f, 0f, 0f)
     )
+    val coroutineScope = rememberCoroutineScope()
+    val offsetX = remember { mutableStateOf(0f) }
+    val offsetY = remember { mutableStateOf(0f) }
     val imageLinks = imageUris.map { it.uri }
     val isTouched = remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { imageLinks.size })
-    val scale = remember { mutableFloatStateOf(1f) }
-    val zoomLevels = listOf(1f, 3f)
+    val scale = remember { (mutableFloatStateOf(1f)) }
+    val zoomLevels = listOf(1f, 5f)
+    val composableSize = remember { mutableStateOf(IntSize.Zero) }
+    val animationSpec: AnimationSpec<Float> = tween(
+        durationMillis = 300,
+        delayMillis = 50,
+        easing = LinearOutSlowInEasing
+    )
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     val callback = remember {
         object : OnBackPressedCallback(true) {
@@ -72,6 +94,12 @@ fun ImagePager(
                 if (isTouched.value) {
                     isTouched.value = false
                     isMapLoaded.value = false
+                    scale.floatValue = 1f
+                    offsetX.value = 0f
+                    offsetY.value = 0f
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(page = 0, animationSpec = animationSpec)
+                    }
                 } else {
                     navController.popBackStack()
                 }
@@ -84,6 +112,11 @@ fun ImagePager(
             callback.remove()
         }
     }
+    LaunchedEffect(pagerState.currentPage) {
+        scale.floatValue = 1f
+        offsetX.value = 0f
+        offsetY.value = 0f
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -94,25 +127,46 @@ fun ImagePager(
             state = pagerState,
             modifier = Modifier
                 .matchParentSize()
-                .graphicsLayer(scaleX = scale.floatValue, scaleY = scale.floatValue)
-                .transformable(state = rememberTransformableState { zoomChange, _, _ ->
+                .transformable(state = rememberTransformableState { zoomChange, panChange, _ ->
                     val newScale = scale.floatValue * zoomChange
                     if (newScale in zoomLevels[0]..zoomLevels[1]) {
                         scale.floatValue = newScale
                     }
-                }
+                    if (scale.floatValue > zoomLevels[0]) {
+                        val maxTranslationX =
+                            (composableSize.value.width * scale.floatValue - composableSize.value.width) / 2
+                        val maxTranslationY =
+                            (composableSize.value.height * scale.floatValue - composableSize.value.height) / 2
+                        val newOffsetX = offsetX.value + panChange.x
+                        val newOffsetY = offsetY.value + panChange.y
+                        if (newOffsetX in -maxTranslationX..maxTranslationX) {
+                            offsetX.value = newOffsetX
+                        }
+                        if (newOffsetY in -maxTranslationY..maxTranslationY) {
+                            offsetY.value = newOffsetY
+                        }
+                    }
+                    Log.e("MyMessage", "scale = ${scale.floatValue}")
+                },
+                    canPan = { scale.floatValue > zoomLevels[0] }
                 )
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onTap = {
-
-                        },
                         onDoubleTap = {
                             scale.floatValue =
                                 if (scale.floatValue == zoomLevels[0]) zoomLevels[1] else zoomLevels[0]
-                        }
+                            offsetX.value = 0f
+                            offsetY.value = 0f
+                        },
                     )
-                },
+                }
+                .graphicsLayer(
+                    scaleX = scale.floatValue,
+                    scaleY = scale.floatValue,
+                    translationX = offsetX.value,
+                    translationY = offsetY.value,
+                    transformOrigin = TransformOrigin.Center
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) { page ->
             val uri = imageLinks[page]
@@ -120,8 +174,21 @@ fun ImagePager(
                 model = uri,
                 contentDescription = "",
                 contentScale = ContentScale.FillWidth,
-                modifier = Modifier,
-            )
+                alignment = Alignment.Center,
+                modifier = Modifier
+                    .onGloballyPositioned { coordinates ->
+                        composableSize.value = coordinates.size
+                    }
+                    .fillMaxSize()
+
+            ) {
+                val state = painter.state
+                if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
+                    CircularProgressIndicator()
+                } else {
+                    SubcomposeAsyncImageContent()
+                }
+            }
         }
         Box(
             modifier = Modifier
@@ -156,6 +223,12 @@ fun ImagePager(
                 onClick = {
                     isTouched.value = false
                     isMapLoaded.value = false
+                    scale.floatValue = 1f
+                    offsetX.value = 0f
+                    offsetY.value = 0f
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(page = 0, animationSpec = animationSpec)
+                    }
                 },
             ) {
                 Icon(imageVector = Icons.Sharp.Close, contentDescription = "")

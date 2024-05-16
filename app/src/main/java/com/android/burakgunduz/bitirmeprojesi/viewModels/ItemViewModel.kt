@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.ViewModels
+package com.android.burakgunduz.bitirmeprojesi.viewModels
 
 import android.content.ContentValues.TAG
 import android.net.Uri
@@ -54,6 +54,7 @@ class ItemViewModel : ViewModel() {
     }
     val itemDetails: MutableLiveData<Item?> = MutableLiveData()
     val itemImages: MutableLiveData<List<NamedUri>> = MutableLiveData()
+    val sellerName = MutableLiveData<MutableState<String>>()
     fun loadItems() {
         db.collection("itemsOnSale")
             .get()
@@ -79,6 +80,9 @@ class ItemViewModel : ViewModel() {
                         val itemDetail =
                             document.toObject(Item::class.java)?.copy(itemID = document.id)
                         itemDetails.value = itemDetail
+                        if (itemDetails.value != null){
+                            getUserName(itemDetails.value!!.userID)
+                        }
                     }
                     .addOnFailureListener { exception ->
                         Log.w(TAG, "Error getting documents: ", exception)
@@ -107,7 +111,21 @@ class ItemViewModel : ViewModel() {
             Log.d("ItemViewModel", "loadItemImages: Images already loaded")
         }
     }
-
+    fun getUserName(userID: String) {
+        var userName = ""
+        db.collection("users")
+            .document(userID)
+            .get()
+            .addOnSuccessListener { document ->
+                userName = document.getString("name").toString()
+                Log.d(TAG, "DocumentSnapshot data: ${userName}")
+                sellerName.value = mutableStateOf(userName)
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+                Log.d(TAG, "DocumentSnapshot data: ${userName}")
+            }
+    }
     fun saveItem(fileStream: MutableState<List<Uri>>, itemDetails: MutableList<String>) {
         val item = createItemFromDetails(itemDetails)
         val itemIDforRef = mutableStateOf("")
