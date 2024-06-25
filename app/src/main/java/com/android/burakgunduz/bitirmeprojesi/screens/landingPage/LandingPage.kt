@@ -2,50 +2,45 @@ package com.android.burakgunduz.bitirmeprojesi.screens.landingPage
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.android.burakgunduz.bitirmeprojesi.MainButtonForAuth
-import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.titleTextColorChanger
-import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
+import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.landingPage.LandingScreen
+import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.loginScreen.LoginScreen
+import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.registerScreen.RegisterScreen
+import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.resetPasswordScreen.ResetPasswordScreen
+import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
-fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: Int) {
-    var cardExpanded by remember { mutableStateOf(false) }
-    var isNavigating by remember { mutableStateOf(true) }
+fun LandingPage(
+    navController: NavController,
+    isDarkModeOn: Boolean,
+    iconSize: Int,
+    authViewModel: AuthViewModel
+) {
+    val screenNumber = remember { mutableIntStateOf(0) }
+    val cardExpanded = remember { mutableStateOf(false) }
+    val isLoading = remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .offset(y = if (cardExpanded.value) -(iconSize.dp / 150) else iconSize.dp / 50),
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -53,88 +48,53 @@ fun LandingPage(navController: NavController, isDarkModeOn: Boolean, iconSize: I
             modifier = Modifier
                 .fillMaxWidth()
                 .animateContentSize()
-                .offset(y = if (cardExpanded) -(iconSize.dp / 150) else iconSize.dp / 50)
-                .fillMaxHeight(if (cardExpanded) 0.8f else 0.7f),
-            shape = AbsoluteRoundedCornerShape(30.dp)
+                .fillMaxHeight(if (cardExpanded.value) 0.8f else 0.7f),
+            shape = AbsoluteRoundedCornerShape(30.dp),
         ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .padding(iconSize.dp / 50)
-                ) {
-                    Card(
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .size(iconSize.dp / 10)
-                            .padding(iconSize.dp / 100),
-                        colors = iconCardColor(isDarkModeOn)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.MonetizationOn,
-                            contentDescription = "",
-                            modifier = Modifier.size(iconSize.dp / 8)
-                        )
-                    }
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = iconSize.dp / 25)
-                    ) {
-                        Text(
-                            text = "New Way of Shopping",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontFamily = archivoFonts,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = -(2.sp),
-                            color = titleTextColorChanger(isDarkModeOn),
-                        )
-                        Text(
-                            text = "Turn clutter into cash. Effortless selling, endless possibilities.",
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                            fontFamily = archivoFonts,
-                            fontWeight = FontWeight.Thin,
-                            letterSpacing = -(1.sp),
-                        )
-                    }
+            if (isLoading.value) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                MainButtonForAuth(action = {
-                    navController.navigate("registerScreenNav") {
-                        popUpTo("landingScreenNav") {
-                            inclusive = true
-                        }
-                    }
-                    cardExpanded = !cardExpanded
-                }, isDarkModeOn = isDarkModeOn, buttonText = "CREATE AN ACCOUNT")
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Already have an account?")
-                    TextButton(onClick = {
-                        navController.navigate("loginScreenNav")
-                    }) {
-                        Text(text = "Login", textDecoration = TextDecoration.Underline)
-                    }
+                LaunchedEffect(isLoading.value) {
+                    delay(500)
+                    isLoading.value = false
+                }
+            } else {
+                when (screenNumber.intValue) {
+                    0 -> LandingScreen(
+                        isDarkModeOn,
+                        iconSize,
+                        cardExpanded,
+                        screenNumber,
+                        isLoading
+                    )
+
+                    1 -> LoginScreen(
+                        navController = navController,
+                        isDarkModeOn = isDarkModeOn,
+                        cardExpanded = cardExpanded,
+                        iconSize = iconSize,
+                        screenNumber = screenNumber,
+                        authViewModel = authViewModel,
+                        isLoading
+                    )
+
+                    2 -> RegisterScreen(
+                        navController = navController,
+                        isDarkModeOn = isDarkModeOn,
+                        screenNumber = screenNumber,
+                        authViewModel = authViewModel,
+                        cardShrank = cardExpanded,
+                        isLoading
+                    )
+                    3 -> ResetPasswordScreen(
+                        isDarkModeOn = isDarkModeOn,
+                        screenNumber = screenNumber,
+                        authViewModel = authViewModel,
+                        isLoading =isLoading
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun iconCardColor(isDarkModeOn: Boolean): CardColors {
-    return if (!isDarkModeOn) {
-        CardDefaults.cardColors(containerColor = Color.White)
-
-    } else {
-        CardDefaults.cardColors(containerColor = Color.Black)
     }
 }

@@ -1,121 +1,267 @@
 package com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.subScreens
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBackIos
+import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.outlined.Wysiwyg
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.android.burakgunduz.bitirmeprojesi.viewModels.CountryInfo
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
+import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components.CategoryDropDownMenu
+import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components.ItemDetailsTextfield
+import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components.ProgressBar
+import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
+import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListItemDetails(
     itemDetails: MutableList<String>,
     screenNumber: MutableState<Int>,
-    countryNames: State<List<CountryInfo>?>
+    coroutineScope: CoroutineScope,
+    nextScreen: MutableState<Boolean>,
+    itemViewModel: ItemViewModel,
 ) {
-    val dropControl = remember { mutableStateOf(false) }
-    val title = remember { mutableStateOf("") }
-    val brand = remember { mutableStateOf("") }
-    val itemCategory = remember { mutableStateOf("") }
-    val description = remember { mutableStateOf("") }
-    val price = remember { mutableStateOf("") }
-    val condition = remember { mutableStateOf("") }
-    Log.e("LogDetails", itemDetails.toString())
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-        OutlinedTextField(value = title.value, onValueChange = {
-            title.value = it
-        }, label = {
-            Text("Title")
-        })
-        OutlinedTextField(value = brand.value, onValueChange = {
-            brand.value = it
-        }, label = { Text("Brand") })
-        OutlinedTextField(value = itemCategory.value, onValueChange = {
-            itemCategory.value = it
-        }, label = { Text("Item Category") })
-        OutlinedTextField(
-            value = description.value,
-            onValueChange = {
-                description.value = it
-            },
-            label = { Text("Description") },
-            minLines = 6,
-        )
-        OutlinedTextField(value = price.value, onValueChange = {
-            price.value = it
-        }, label = { Text("Price") })
-        ExposedDropdownMenuBox(
-            expanded = dropControl.value,
-            onExpandedChange = { dropControl.value = it }) {
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                label = {
-                    Text(
-                        text = when (condition.value) {
-                            0.toString() -> "New"
-                            1.toString() -> "Used"
-                            2.toString() -> "Refurbished"
-                            else -> "Select Condition"
-                        }
-                    )
-                },
-                readOnly = true,
-                modifier = Modifier.menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = dropControl.value,
-                onDismissRequest = { dropControl.value = false }) {
-                DropdownMenuItem(
-                    text = { Text("New") },
-                    onClick = {
-                        condition.value = 0.toString()
-                        dropControl.value = false
-                    })
-                DropdownMenuItem(
-                    text = { Text("Used") },
-                    onClick = {
-                        condition.value = 1.toString()
-                        dropControl.value = false
-                    })
-                DropdownMenuItem(
-                    text = { Text("Refurbished") },
-                    onClick = {
-                        condition.value = 2.toString()
-                        dropControl.value = false
-                    })
-            }
 
-        }
-        Button(onClick = {
-            screenNumber.value = 2
-            itemDetails.addAll(
-                listOf(
-                    title.value,
-                    brand.value,
-                    itemCategory.value,
-                    description.value,
-                    price.value,
-                    condition.value
-                )
-            )
-            itemDetails.forEach() {
-                Log.d("ItemDetails", it)
-            }
-        }) {
-            Text("Next")
-        }
+    val dropControl = remember { mutableStateOf(false) }
+    val title = remember { mutableStateOf(itemDetails.getOrNull(0) ?: "") }
+    val brand = remember { mutableStateOf(itemDetails.getOrNull(1) ?: "") }
+    val itemCategory = remember { mutableStateOf(itemDetails.getOrNull(2) ?: "") }
+    val itemSubCategory = remember { mutableStateOf(itemDetails.getOrNull(3) ?: "") }
+    val description = remember { mutableStateOf(itemDetails.getOrNull(4) ?: "") }
+    val price = remember { mutableStateOf(itemDetails.getOrNull(5) ?: "") }
+    val condition = remember { mutableStateOf(itemDetails.getOrNull(6) ?: "") }
+    val itemCategories = itemViewModel.categoriesList.observeAsState()
+    val itemSubCategories = itemViewModel.subCategoriesList.observeAsState()
+    if (itemCategories.value.isNullOrEmpty()) {
+        itemViewModel.loadItemCategories()
     }
+    val subCategoriesList = itemSubCategories.value?.map { it } ?: listOf()
+    val categoryList = itemCategories.value?.map { it } ?: listOf()
+    val focusManager = LocalFocusManager.current
+
+    Log.e("LogDetails", itemDetails.toString())
+    Log.e("isNextScreen", nextScreen.toString())
+    LaunchedEffect(nextScreen) {
+        delay(500)
+        nextScreen.value = true
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AnimatedVisibility(
+            visible = nextScreen.value,
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Add Item Details",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontFamily = archivoFonts,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-1).sp,
+                    fontSize = 30.sp
+                )
+                Column(
+                    modifier = Modifier.fillMaxHeight(0.8f),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    BackHandler {
+                        coroutineScope.launch {
+                            screenNumber.value = 0
+                            itemDetails.clear()
+                            itemDetails.addAll(
+                                listOf(
+                                    title.value,
+                                    brand.value,
+                                    itemCategory.value,
+                                    itemSubCategory.value,
+                                    description.value,
+                                    price.value,
+                                    condition.value
+                                )
+                            )
+                        }
+                    }
+                    ItemDetailsTextfield(
+                        fieldName = "Title",
+                        fieldValue = title.value,
+                        onValueChange = { title.value = it },
+                        focusManager = focusManager
+                    )
+                    ItemDetailsTextfield(
+                        fieldName = "Brand",
+                        fieldValue = brand.value,
+                        onValueChange = { brand.value = it },
+                        focusManager = focusManager
+                    )
+                    CategoryDropDownMenu(
+                        updatedData = itemCategory,
+                        items = categoryList,
+                        isCategorySelected = !categoryList.isNullOrEmpty(),
+                        nameOfDropBox = "Category"
+                    )
+                    LaunchedEffect(itemCategory.value) {
+                        if (itemCategory.value.isNotEmpty()) {
+                            coroutineScope.launch {
+                                itemViewModel.loadSubItemCategories(itemCategory.value)
+                            }
+                        }
+                    }
+                    CategoryDropDownMenu(
+                        updatedData = itemSubCategory,
+                        items = subCategoriesList,
+                        isCategorySelected = !subCategoriesList.isNullOrEmpty(),
+                        nameOfDropBox = "Sub-Category"
+                    )
+                    ItemDetailsTextfield(
+                        fieldName = "Price",
+                        fieldValue = price.value,
+                        onValueChange = { price.value = it },
+                        focusManager = focusManager,
+                        keyboardOptions = KeyboardType.Number,
+                        suffixText = "€"
+                    )
+                    ItemDetailsTextfield(
+                        fieldName = "Description",
+                        fieldValue = description.value,
+                        isItSingleLine = false,
+                        onValueChange = { description.value = it },
+                        minLineCount = 6,
+                        maxLineCount = 6,
+                        focusManager = focusManager,
+                        cornerRound = 8,
+                        maxLength = 200
+                    )
+                    ExposedDropdownMenuBox(
+                        expanded = dropControl.value,
+                        onExpandedChange = { dropControl.value = it }) {
+                        OutlinedTextField(
+                            value = when (condition.value) {
+                                0.toString() -> "New"
+                                1.toString() -> "Used"
+                                2.toString() -> "Refurbished"
+                                else -> "Select Condition"
+                            },
+                            onValueChange = {},
+                            label = {
+                                Text("Condition")
+                            },
+                            shape = AbsoluteRoundedCornerShape(16),
+                            readOnly = true,
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(0.8f),
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = if (dropControl.value) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                    contentDescription = "Dropdown Icon",
+                                )
+                            }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = dropControl.value,
+                            onDismissRequest = { dropControl.value = false }) {
+                            DropdownMenuItem(
+                                text = { Text("New") },
+                                onClick = {
+                                    condition.value = 0.toString()
+                                    dropControl.value = false
+                                })
+                            DropdownMenuItem(
+                                text = { Text("Used") },
+                                onClick = {
+                                    condition.value = 1.toString()
+                                    dropControl.value = false
+                                })
+                            DropdownMenuItem(
+                                text = { Text("Refurbished") },
+                                onClick = {
+                                    condition.value = 2.toString()
+                                    dropControl.value = false
+                                })
+                        }
+
+                    }
+                }
+            }
+        }
+        val isMet =
+            title.value.isNotEmpty() && brand.value.isNotEmpty() && itemCategory.value.isNotEmpty() && itemSubCategory.value.isNotEmpty() && description.value.isNotEmpty() && price.value.isNotEmpty() && condition.value.isNotEmpty()
+        ProgressBar(
+            isProgressRequirementsMet = isMet,
+            currentIcon = Icons.AutoMirrored.Outlined.Wysiwyg,
+            nextIcon = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+            previousIcon = Icons.AutoMirrored.Outlined.ArrowBackIos,
+            nextScreen = {
+                screenNumber.value = 2
+                itemDetails.clear()
+                itemDetails.addAll(
+                    listOf(
+                        title.value,
+                        brand.value,
+                        itemCategory.value,
+                        itemSubCategory.value,
+                        description.value,
+                        price.value,
+                        condition.value
+                    )
+                )
+                nextScreen.value = false
+            },
+            previousScreen = {
+                screenNumber.value = 0
+                itemDetails.clear()
+                itemDetails.addAll(
+                    listOf(
+                        title.value,
+                        brand.value,
+                        itemCategory.value,
+                        itemSubCategory.value,
+                        description.value,
+                        price.value,
+                        condition.value
+                    )
+                )
+                nextScreen.value = false
+            }
+        )
+    }
+
 }

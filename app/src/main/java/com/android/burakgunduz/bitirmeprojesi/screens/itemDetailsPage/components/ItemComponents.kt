@@ -10,7 +10,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 
 
@@ -62,7 +64,8 @@ fun ItemDescription(itemDesc: String) {
         Text(
             text = "Description",
             fontFamily = archivoFonts,
-            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-2).sp,
+            fontWeight = FontWeight.ExtraBold,
             style = MaterialTheme.typography.titleLarge,
         )
     }
@@ -85,15 +88,48 @@ fun ItemDescription(itemDesc: String) {
 fun ItemPrice(itemPrice: Int) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp),
+            .padding(10.dp, end = 25.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "$itemPrice €",
             fontFamily = archivoFonts,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.ExtraBold,
             style = MaterialTheme.typography.titleLarge,
+        )
+    }
+}
+@Composable
+fun ItemCategory(itemCategory: String,itemSubCategory: String) {
+    Row(
+        modifier = Modifier
+            .padding(start = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = itemCategory,
+            fontFamily = archivoFonts,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-2).sp,
+            style = MaterialTheme.typography.titleMedium,
+            textDecoration = TextDecoration.Underline
+        )
+        Text(
+            text = ">",
+            fontFamily = archivoFonts,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-2).sp,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(start = 5.dp, end = 5.dp, top = 2.dp)
+        )
+        Text(
+            text = itemSubCategory,
+            fontFamily = archivoFonts,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-2).sp,
+            style = MaterialTheme.typography.titleMedium,
+            textDecoration = TextDecoration.Underline,
         )
     }
 }
@@ -103,14 +139,15 @@ fun ItemName(itemName: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(10.dp),
+            .padding(start = 10.dp, top = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = itemName,
             fontFamily = archivoFonts,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-2).sp,
+            style = MaterialTheme.typography.headlineLarge,
         )
     }
 }

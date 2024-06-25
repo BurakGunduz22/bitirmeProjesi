@@ -16,24 +16,13 @@ data class Message(
     val receiverID: String = "",
     val itemID: String = "",
     val message: String = "",
-    val timestamp: Timestamp = Timestamp.now()
-)
-
-data class ConversationID(
-    val senderID: String = "",
-    val itemID: String = "",
-    val timestamp: Timestamp = Timestamp.now()
+    val timestamp: Timestamp = Timestamp.now(),
 )
 
 class MessageViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val fireStorageDB = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
-    private val storageRef = fireStorageDB.reference
-    val directMessages: MutableLiveData<List<Message>> by lazy {
-        MutableLiveData<List<Message>>().also {
-            getDirectMessages("senderID", "itemID", "receiverID")
-        }
-    }
+    val directMessages: MutableLiveData<List<Message>> = MutableLiveData()
     val messageList: MutableLiveData<List<Message>> by lazy {
         MutableLiveData<List<Message>>().also {
             getAllMessages("userID")
@@ -55,6 +44,7 @@ class MessageViewModel : ViewModel() {
         Log.d("First Message", "Messages: $sendingMessage")
         db.collection("messages")
             .add(sendingMessage).addOnSuccessListener {
+                Log.d("First Message", "Messages: $it")
                 db.collection("messages")
                     .document(it.id)
                     .collection("messageContext")
@@ -76,18 +66,9 @@ class MessageViewModel : ViewModel() {
         )
         Log.d("New Message", "Messages: $sendingMessage")
         db.collection("messages")
-            .where(
-                Filter.or(
-                    Filter.and(
-                        Filter.equalTo("senderID", userID),
-                        Filter.equalTo("receiverID", conversationUserID)
-                    ),
-                    Filter.and(
-                        Filter.equalTo("senderID", conversationUserID),
-                        Filter.equalTo("receiverID", userID)
-                    )
-                )
-            )
+            .whereEqualTo("itemID", itemID)
+            .whereIn("senderID", listOf(userID, conversationUserID))
+            .whereIn("receiverID", listOf(userID, conversationUserID))
             .get()
             .addOnSuccessListener {
                 db.collection("messages")
@@ -98,36 +79,25 @@ class MessageViewModel : ViewModel() {
     }
 
     fun getDirectMessages(userID: String, itemID: String, receiverID: String) {
+        directMessages.value = emptyList()
         Log.d("MesajlarGeldi", "Messages: $userID, $itemID, $receiverID")
         db.collection("messages")
-            .where(
-                Filter.or(
-                    Filter.and(
-                        Filter.equalTo("itemID", itemID),
-                        Filter.equalTo("receiverID", userID),
-                        Filter.equalTo("senderID", receiverID)
-                    ),
-                    Filter.and(
-                        Filter.equalTo("senderID", userID),
-                        Filter.equalTo("itemID", itemID),
-                        Filter.equalTo("receiverID", receiverID)
-                    )
-                )
-            )
+            .whereEqualTo("itemID", itemID)
+            .whereIn("senderID", listOf(userID, receiverID))
+            .whereIn("receiverID", listOf(userID, receiverID))
             .get()
             .addOnSuccessListener { result ->
                 if (result.documents.isNotEmpty()) {
+                    Log.e("MesajGeldi", "Messages: ${result.documents[0].id}")
                     db.collection("messages").document(result.documents[0].id)
                         .collection("messageContext")
                         .get()
-                        .addOnSuccessListener { result ->
-
-                            val items = result.mapNotNull { document ->
+                        .addOnSuccessListener { documents ->
+                            val items = documents.mapNotNull { document ->
                                 document.toObject(Message::class.java)
                             }
                             directMessages.value = items
                             Log.d("MesajGeldi", "Messages: $items")
-
                         }
                 } else {
                     Log.d("MesajGelmedi", "No documents found.")
@@ -158,6 +128,19 @@ class MessageViewModel : ViewModel() {
             .addOnFailureListener { exception ->
                 Log.w("Mesajlar", "Error getting documents.", exception)
             }
-
     }
+
+    fun getUserName(userID: String, userName: (String) -> Unit) {
+        db.collection("users")
+            .document(userID)
+            .get()
+            .addOnSuccessListener { document ->
+                userName(document.getString("name").toString())
+                Log.e("UserName", "UserName: ${document.getString("name").toString()}")
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+
 }

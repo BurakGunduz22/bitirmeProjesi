@@ -3,6 +3,7 @@ package com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.component
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenuItem
@@ -26,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.android.burakgunduz.bitirmeprojesi.viewModels.CityInfo
 import com.android.burakgunduz.bitirmeprojesi.viewModels.CountryInfo
 import com.android.burakgunduz.bitirmeprojesi.viewModels.TownInfo
-import kotlinx.coroutines.CoroutineScope
 
 @SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,7 +34,8 @@ import kotlinx.coroutines.CoroutineScope
 fun ExposedDropdownMenu(
     updatedData: MutableState<String>,
     items: List<Any>,
-    coroutineScope: CoroutineScope
+    isLocationFilled: Boolean,
+    nameOfDropBox: String
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selected = remember { mutableStateOf("") }
@@ -54,13 +55,15 @@ fun ExposedDropdownMenu(
     val size = filteringOptions.value.size
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = if (selected.value.isNotEmpty()) it else false },
+        onExpandedChange = { expanded = it },
     ) {
         OutlinedTextField(
             value = selected.value,
             onValueChange = {
                 selected.value = it
             },
+            shape = AbsoluteRoundedCornerShape(16),
+            enabled = isLocationFilled,
             trailingIcon = {
                 val rotation by animateFloatAsState(if (expanded) 180F else 0F, label = "")
                 Icon(
@@ -70,7 +73,7 @@ fun ExposedDropdownMenu(
                 )
             },
             label = {
-                Text(text = "Country")
+                Text(text = nameOfDropBox)
             },
             modifier = Modifier.menuAnchor(),
         )
@@ -85,7 +88,7 @@ fun ExposedDropdownMenu(
                 if (size > 3) 160.dp else ((50 * size) + 10).dp
             )
         ) {
-            filteringOptions.value.forEach { item ->
+            filteringOptions.value.map { item ->
                 DropdownMenuItem(
                     onClick = {
                         expanded = false
@@ -101,7 +104,6 @@ fun ExposedDropdownMenu(
                             is TownInfo -> {
                                 selected.value = item.name
                                 updatedData.value = item.name
-
                             }
                         }
                     },

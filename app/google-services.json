@@ -12,7 +12,20 @@
           "package_name": "com.android.burakgunduz.bitirmeprojesi"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "129861234415-51shpv08rb89gg2jvjjnt4d36vp2tgcl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.android.burakgunduz.bitirmeprojesi",
+            "certificate_hash": "c28a7e386385de85d422b33e599b947922199de7"
+          }
+        },
+        {
+          "client_id": "129861234415-vnfta2rosqnf74p6g3bepk31psjojhr8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCEsp4IZKMQdfbe_ZBnPb-xF7zuoWeXWUg"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "129861234415-vnfta2rosqnf74p6g3bepk31psjojhr8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "129861234415-9rb0pju6o9ivdjo7c48i9su73cu2m2np.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.umarimProje"
+              }
+            }
+          ]
         }
       }
     }

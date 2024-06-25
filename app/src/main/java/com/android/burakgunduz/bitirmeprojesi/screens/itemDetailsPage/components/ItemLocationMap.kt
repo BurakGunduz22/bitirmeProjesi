@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.android.burakgunduz.bitirmeprojesi.R
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.Item
@@ -108,7 +109,8 @@ fun ItemLocationMap(
         Text(
             text = "Location",
             fontFamily = archivoFonts,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-2).sp,
             style = MaterialTheme.typography.titleLarge,
         )
     }

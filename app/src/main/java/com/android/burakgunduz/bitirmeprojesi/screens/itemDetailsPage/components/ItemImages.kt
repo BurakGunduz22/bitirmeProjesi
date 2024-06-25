@@ -62,7 +62,8 @@ import kotlinx.coroutines.launch
 fun ImagePager(
     imageUris: List<NamedUri>,
     navController: NavController,
-    isMapLoaded: MutableState<Boolean>
+    isMapLoaded: MutableState<Boolean>,
+    isTouched: MutableState<Boolean>
 ) {
     val colorStops = arrayOf(
         0.0f to Color.hsl(0f, 0f, 0f, 0f),
@@ -74,10 +75,10 @@ fun ImagePager(
         0.0f to Color.hsl(0f, 0f, 0f, 0f)
     )
     val coroutineScope = rememberCoroutineScope()
-    val offsetX = remember { mutableStateOf(0f) }
-    val offsetY = remember { mutableStateOf(0f) }
+    val offsetX = remember { mutableFloatStateOf(0f) }
+    val offsetY = remember { mutableFloatStateOf(0f) }
     val imageLinks = imageUris.map { it.uri }
-    val isTouched = remember { mutableStateOf(false) }
+
     val pagerState = rememberPagerState(pageCount = { imageLinks.size })
     val scale = remember { (mutableFloatStateOf(1f)) }
     val zoomLevels = listOf(1f, 5f)
@@ -95,8 +96,8 @@ fun ImagePager(
                     isTouched.value = false
                     isMapLoaded.value = false
                     scale.floatValue = 1f
-                    offsetX.value = 0f
-                    offsetY.value = 0f
+                    offsetX.floatValue = 0f
+                    offsetY.floatValue = 0f
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(page = 0, animationSpec = animationSpec)
                     }
@@ -114,8 +115,8 @@ fun ImagePager(
     }
     LaunchedEffect(pagerState.currentPage) {
         scale.floatValue = 1f
-        offsetX.value = 0f
-        offsetY.value = 0f
+        offsetX.floatValue = 0f
+        offsetY.floatValue = 0f
     }
     Box(
         modifier = Modifier
@@ -137,13 +138,13 @@ fun ImagePager(
                             (composableSize.value.width * scale.floatValue - composableSize.value.width) / 2
                         val maxTranslationY =
                             (composableSize.value.height * scale.floatValue - composableSize.value.height) / 2
-                        val newOffsetX = offsetX.value + panChange.x
-                        val newOffsetY = offsetY.value + panChange.y
+                        val newOffsetX = offsetX.floatValue + panChange.x
+                        val newOffsetY = offsetY.floatValue + panChange.y
                         if (newOffsetX in -maxTranslationX..maxTranslationX) {
-                            offsetX.value = newOffsetX
+                            offsetX.floatValue = newOffsetX
                         }
                         if (newOffsetY in -maxTranslationY..maxTranslationY) {
-                            offsetY.value = newOffsetY
+                            offsetY.floatValue = newOffsetY
                         }
                     }
                     Log.e("MyMessage", "scale = ${scale.floatValue}")
@@ -155,16 +156,16 @@ fun ImagePager(
                         onDoubleTap = {
                             scale.floatValue =
                                 if (scale.floatValue == zoomLevels[0]) zoomLevels[1] else zoomLevels[0]
-                            offsetX.value = 0f
-                            offsetY.value = 0f
+                            offsetX.floatValue = 0f
+                            offsetY.floatValue = 0f
                         },
                     )
                 }
                 .graphicsLayer(
                     scaleX = scale.floatValue,
                     scaleY = scale.floatValue,
-                    translationX = offsetX.value,
-                    translationY = offsetY.value,
+                    translationX = offsetX.floatValue,
+                    translationY = offsetY.floatValue,
                     transformOrigin = TransformOrigin.Center
                 ),
             verticalAlignment = Alignment.CenterVertically,
@@ -224,8 +225,8 @@ fun ImagePager(
                     isTouched.value = false
                     isMapLoaded.value = false
                     scale.floatValue = 1f
-                    offsetX.value = 0f
-                    offsetY.value = 0f
+                    offsetX.floatValue = 0f
+                    offsetY.floatValue = 0f
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(page = 0, animationSpec = animationSpec)
                     }

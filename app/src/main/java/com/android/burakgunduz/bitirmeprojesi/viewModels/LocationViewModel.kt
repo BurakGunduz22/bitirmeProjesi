@@ -33,7 +33,7 @@ data class TownInfo(
 class LocationViewModel : ViewModel() {
     val countryNames = MutableLiveData<List<CountryInfo>>()
     val cityNames = MutableLiveData<MutableList<CityInfo>>()
-    val streetNames = MutableLiveData<MutableList<StreetInfo>>()
+    private val streetNames = MutableLiveData<MutableList<StreetInfo>>()
     val townNames = MutableLiveData<MutableList<TownInfo>>()
     suspend fun fetchCountryNames() =
         withContext(Dispatchers.IO) {
@@ -76,7 +76,6 @@ class LocationViewModel : ViewModel() {
     suspend fun fetchCitiesOfCountry(
         country: String,
         countryList: List<CountryInfo>,
-        startRow: Int,
     ) =
         withContext(Dispatchers.IO) {
             val filterCountryCode = countryList.filter { it.name == country }
@@ -123,7 +122,6 @@ class LocationViewModel : ViewModel() {
     suspend fun fetchTownOfCity(
         city: String,
         cityList: MutableList<CityInfo>,
-        startRow: Int,
     ) =
         withContext(Dispatchers.IO) {
             val filterCityCode = cityList.filter { it.name == city }
@@ -170,7 +168,6 @@ class LocationViewModel : ViewModel() {
     suspend fun fetchStreetsOfDistrict(
         district: String,
         districtList: List<TownInfo>,
-        startRow: Int,
     ) =
         withContext(Dispatchers.IO) {
             val filterDistrictCode = districtList.filter { it.name == district }
