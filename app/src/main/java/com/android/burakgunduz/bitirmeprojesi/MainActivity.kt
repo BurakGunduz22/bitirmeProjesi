@@ -1,7 +1,5 @@
 package com.android.burakgunduz.bitirmeprojesi
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -29,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -49,30 +46,26 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.android.burakgunduz.bitirmeprojesi.screens.editItemScreen.EditItemScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.favoriteScreen.FavoriteScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.FeedScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.ItemDetailsPage
-import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.LandingPage
-import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.ListItemScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.MessagingListScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.directMessagingScreen.DirectMessagingScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.searchScreen.SearchScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.sellerProfileScreen.SellerProfileScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.userProfileScreen.AccountScreen
-import com.android.burakgunduz.bitirmeprojesi.screens.userProfileScreen.UserProfileScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.BottomNavigationBar
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.TopBarNavigationBar
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.editItemScreen.EditItemScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.favoriteScreen.FavoriteScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.feedScreen.FeedScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.ItemDetailsPage
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.landingPage.LandingPage
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.listItemForSale.ListItemScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.messagingScreen.MessagingListScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.messagingScreen.subScreens.DirectMessagingScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.searchScreen.SearchScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.sellerProfileScreen.SellerProfileScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.userProfileScreen.UserProfileScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.AppTheme
 import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.LocationViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
-import com.google.firebase.appcheck.AppCheckToken
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
@@ -89,17 +82,6 @@ class MainActivity : ComponentActivity() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        appCheckOpened(this)
-        getToken(
-            successCallback = { token ->
-                println("App Check token: ${token.token}")
-                setTokenAutoRefreshEnabled(true)
-            },
-            errorCallback = { exception ->
-                println("Error getting App Check token: ${exception.message}")
-            }
-        )
         val storage = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
         val storageRef = storage.reference
         auth = Firebase.auth
@@ -148,13 +130,11 @@ fun OpeningScreen(
     authViewModel: AuthViewModel,
     storageRef: StorageReference
 ) {
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val isBottomBarVisible = remember { mutableStateOf(true) }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val iconSize = (configuration.screenWidthDp.dp * density.density).value.toInt()
-    val db = Firebase.firestore
     val navController = rememberNavController()
     val startNavigateScreen = remember { mutableStateOf("") }
     val userInfosFar = rememberSaveable { mutableStateOf(auth.currentUser?.uid) }
@@ -417,7 +397,13 @@ fun OpeningScreen(
 
                         }
                     ) { navBack ->
-                        DirectMessagingScreen(messageViewModel, userInfosFar.value, navBack, navController, itemViewModel)
+                        DirectMessagingScreen(
+                            messageViewModel,
+                            userInfosFar.value,
+                            navBack,
+                            navController,
+                            itemViewModel
+                        )
                     }
                     composable("messagingListScreenNav",
                         enterTransition = {
@@ -586,7 +572,9 @@ fun OpeningScreen(
                             itemViewModel,
                             storageRef,
                             isDarkModeOn,
-                            navController
+                            navController,
+                            auth,
+                            userInfosFar
                         )
                     }
                     composable("editItemScreenNav/{itemId}", arguments = listOf(
@@ -703,37 +691,3 @@ fun DarkModeToggle(isDarkModeOn: Boolean, onDarkModeToggle: (Boolean) -> Unit) {
     }
 }
 
-fun appCheckOpened(context: Context) {
-    val isDebuggable = 0 != context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
-    if (isDebuggable) {
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            DebugAppCheckProviderFactory.getInstance(),
-            false
-        )
-    } else {
-        FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance(),
-            false
-        )
-    }
-}
-
-fun getToken(
-    successCallback: (AppCheckToken) -> Unit,
-    errorCallback: (Exception) -> Unit
-) {
-    FirebaseAppCheck.getInstance()
-        .getAppCheckToken(false)
-        .addOnSuccessListener { result ->
-            successCallback.invoke(result)
-            Log.e("AppCheckToken", "AppCheckToken: ${result.token}")
-        }
-        .addOnFailureListener { exception ->
-            errorCallback.invoke(exception)
-            Log.e("AppCheckToken", "AppCheckToken: ${exception.message}")
-        }
-}
-
-fun setTokenAutoRefreshEnabled(isEnabled: Boolean) {
-    FirebaseAppCheck.getInstance().setTokenAutoRefreshEnabled(isEnabled)
-}
