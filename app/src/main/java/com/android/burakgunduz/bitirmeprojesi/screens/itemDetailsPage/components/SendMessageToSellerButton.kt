@@ -37,7 +37,9 @@ fun SendMessageToSellerButton(
     currentUserID: String?,
     toggleButtonChecked: MutableState<Boolean>,
     favoriteAddAction: () -> Unit,
-    favoriteRemoveAction: () -> Unit
+    favoriteRemoveAction: () -> Unit,
+    userName: String,
+    itemName: String,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -50,7 +52,9 @@ fun SendMessageToSellerButton(
             horizontalArrangement = Arrangement.Center
         ) {
             FloatingActionButton(
-                onClick = { navController.navigate("directMessageToSeller/$currentUserID&$itemID&$itemUserID") },
+                onClick = {
+                        navController.navigate("directMessageToSeller/$currentUserID&$itemID&$itemUserID&${userName}&$itemName")
+                },
                 containerColor = successButtonColor(isDarkModeOn = isDarkModeOn).containerColor,
                 contentColor = successButtonColor(isDarkModeOn = isDarkModeOn).contentColor,
                 shape = AbsoluteRoundedCornerShape(7.dp),

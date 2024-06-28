@@ -69,7 +69,7 @@ fun ItemDetailsTextfield(
                 if (lineCount >= maxLineCount || lineCharCount >= maxLength) {
                     focusManager.moveFocus(FocusDirection.Down)
                 } else {
-                    textFieldValue = TextFieldValue("$text\n")
+                    focusManager.clearFocus()
                 }
             }
         )

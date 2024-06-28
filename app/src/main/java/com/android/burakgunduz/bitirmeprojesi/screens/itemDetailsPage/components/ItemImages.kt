@@ -185,7 +185,7 @@ fun ImagePager(
             ) {
                 val state = painter.state
                 if (state is AsyncImagePainter.State.Loading || state is AsyncImagePainter.State.Error) {
-                    CircularProgressIndicator()
+                    Box(modifier = Modifier.size(200.dp), contentAlignment = Alignment.Center){ CircularProgressIndicator() }
                 } else {
                     SubcomposeAsyncImageContent()
                 }

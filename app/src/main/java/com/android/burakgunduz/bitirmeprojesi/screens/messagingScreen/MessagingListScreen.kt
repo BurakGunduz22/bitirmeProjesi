@@ -1,9 +1,11 @@
 package com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen
 
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,16 +18,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.FakeTopBar
 import com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.components.MessageCard
+import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
 import com.google.firebase.storage.StorageReference
+import kotlinx.coroutines.delay
 
 @Composable
 fun MessagingListScreen(
     storageRef: StorageReference,
     messageViewModel: MessageViewModel,
+    itemViewModel: ItemViewModel,
     userIDInfo: MutableState<String?>,
     navController: NavController,
     isDarkModeOn: Boolean
@@ -47,13 +53,17 @@ fun MessagingListScreen(
                 ) {
                     itemsIndexed(messageList) { index, message ->
                         Log.e("UserName", "UserName: $index")
-
                         val imageUrl = remember { mutableStateOf("") }
+                        val itemName = remember { mutableStateOf("") }
                         LaunchedEffect(message) {
+                            delay(300)
                             val storageRefer =
                                 storageRef.child("/itemImages/${message.itemID}/0.png")
                             storageRefer.downloadUrl.addOnSuccessListener {
                                 imageUrl.value = it.toString()
+                            }
+                            itemViewModel.getItemName(message.itemID){
+                                itemName.value = it
                             }
                         }
                         MessageCard(
@@ -62,13 +72,17 @@ fun MessagingListScreen(
                             imageUrl = imageUrl.value,
                             navController = navController,
                             userIDInfo = userIDInfo.value,
-                            messageViewModel = messageViewModel
+                            messageViewModel = messageViewModel,
+                            itemName = itemName.value,
                         )
+
                     }
                 }
 
             } else {
-                CircularProgressIndicator()
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(100.dp))
+                }
             }
         }
     }

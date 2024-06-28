@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,10 +23,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -52,7 +57,9 @@ import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.LandingPage
 import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.ListItemScreen
 import com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.MessagingListScreen
 import com.android.burakgunduz.bitirmeprojesi.screens.messagingScreen.directMessagingScreen.DirectMessagingScreen
+import com.android.burakgunduz.bitirmeprojesi.screens.searchScreen.SearchScreen
 import com.android.burakgunduz.bitirmeprojesi.screens.sellerProfileScreen.SellerProfileScreen
+import com.android.burakgunduz.bitirmeprojesi.screens.userProfileScreen.AccountScreen
 import com.android.burakgunduz.bitirmeprojesi.screens.userProfileScreen.UserProfileScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.AppTheme
 import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
@@ -141,6 +148,8 @@ fun OpeningScreen(
     authViewModel: AuthViewModel,
     storageRef: StorageReference
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val isBottomBarVisible = remember { mutableStateOf(true) }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -162,7 +171,8 @@ fun OpeningScreen(
                     navController = navController
                 )
             }
-        }, bottomBar = {
+        },
+        bottomBar = {
             if (userInfosFar.value != null) {
                 BottomNavigationBar(
                     navController,
@@ -173,7 +183,10 @@ fun OpeningScreen(
                     isBottomBarVisible.value,
                 )
             }
-        }) { paddingValues ->
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    )
+    { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -192,7 +205,39 @@ fun OpeningScreen(
                 ) {
                     composable(
                         "feedScreenNav/{userId}",
-                        arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                        arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }
                     ) {
                         FeedScreen(
                             navController,
@@ -204,40 +249,213 @@ fun OpeningScreen(
                         )
                     }
                     composable(
-                        "landingPageNav"
-                    ) {
-                        LandingPage(navController, isDarkModeOn, iconSize, authViewModel)
+                        "landingPageNav",
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) {
+                        LandingPage(
+                            navController,
+                            isDarkModeOn,
+                            iconSize,
+                            authViewModel,
+                            snackbarHostState
+                        )
                     }
                     composable(
                         "itemDetailsPageNav/{itemId}",
                         arguments = listOf(
                             navArgument("itemId") { type = NavType.StringType }
-                        )
+                        ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }
                     ) { navBack ->
                         ItemDetailsPage(
                             navBack,
                             navController,
                             itemViewModel,
                             isDarkModeOn,
-                            userInfosFar.value
+                            userInfosFar.value,
+                            messageViewModel
                         )
                     }
-                    composable("listItemScreenNav") {
-                        ListItemScreen(itemViewModel, locationViewModel, userInfosFar.value!!, navController)
+                    composable("listItemScreenNav",
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) {
+                        ListItemScreen(
+                            itemViewModel,
+                            locationViewModel,
+                            userInfosFar.value!!,
+                            navController,
+                            isDarkModeOn
+                        )
                     }
-                    composable("directMessageToSeller/{receiverID}&{itemID}&{conversationUserID}",
+                    composable("directMessageToSeller/{receiverID}&{itemID}&{conversationUserID}&{messagerName}&{itemName}",
                         arguments = listOf(
                             navArgument("receiverID") { type = NavType.StringType },
                             navArgument("itemID") { type = NavType.StringType },
                             navArgument("conversationUserID") { type = NavType.StringType }
-                        )
+                        ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }
                     ) { navBack ->
-                        DirectMessagingScreen(messageViewModel, userInfosFar.value, navBack)
+                        DirectMessagingScreen(messageViewModel, userInfosFar.value, navBack, navController, itemViewModel)
                     }
-                    composable("messagingListScreenNav") {
+                    composable("messagingListScreenNav",
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) {
                         MessagingListScreen(
                             storageRef,
                             messageViewModel,
+                            itemViewModel,
                             userInfosFar,
                             navController,
                             isDarkModeOn
@@ -246,7 +464,39 @@ fun OpeningScreen(
                     composable("sellerProfileScreen/{sellerProfileID}",
                         arguments = listOf(
                             navArgument("sellerProfileID") { type = NavType.StringType }
-                        )) { navBack ->
+                        ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) { navBack ->
                         SellerProfileScreen(
                             navBack,
                             itemViewModel,
@@ -255,7 +505,39 @@ fun OpeningScreen(
                             navController
                         )
                     }
-                    composable("favoriteScreenNav") {
+                    composable("favoriteScreenNav",
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) {
                         FavoriteScreen(
                             navController,
                             itemViewModel,
@@ -266,7 +548,39 @@ fun OpeningScreen(
                     composable("userProfileScreen/{sellerProfileID}",
                         arguments = listOf(
                             navArgument("sellerProfileID") { type = NavType.StringType }
-                        )) { navBack ->
+                        ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) { navBack ->
                         UserProfileScreen(
                             navBack,
                             itemViewModel,
@@ -277,13 +591,80 @@ fun OpeningScreen(
                     }
                     composable("editItemScreenNav/{itemId}", arguments = listOf(
                         navArgument("itemId") { type = NavType.StringType }
-                    )) { navBack ->
+                    ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) { navBack ->
                         EditItemScreen(
                             itemViewModel,
                             navController,
                             navBack,
                             userInfosFar.value
                         )
+                    }
+                    composable("searchScreen",
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+
+                        }) {
+                        SearchScreen(itemViewModel, navController, isDarkModeOn, userInfosFar, auth)
                     }
                 }
             }

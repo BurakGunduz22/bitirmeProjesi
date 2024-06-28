@@ -29,7 +29,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import com.android.burakgunduz.bitirmeprojesi.screens.sellerProfileScreen.listedItems.SellerItemCard
+import com.android.burakgunduz.bitirmeprojesi.screens.feedScreen.components.ItemCard
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.google.firebase.storage.StorageReference
 
@@ -89,6 +89,8 @@ fun SellerProfileScreen(
                 ) {
                     itemsIndexed(userItems) { index, document ->
                         val imageUrl = remember { mutableStateOf("") }
+                        val toggleButtonChecked =
+                            remember { mutableStateOf(itemViewModel.isItemLiked(document.itemID)) }
                         LaunchedEffect(document) {
                             val storageRefer =
                                 storageRef.child("/itemImages/${document.itemID}/0.png")
@@ -97,11 +99,20 @@ fun SellerProfileScreen(
                             }
                         }
                         if (imageUrl.value != "") {
-                            SellerItemCard(
+                            ItemCard(
                                 document,
                                 imageUrl.value,
                                 isDarkModeOn,
-                                navController
+                                navController,
+                                toggleButtonChecked,
+                                {
+                                    itemViewModel.addLikedItem(userInfo.value!!.value.userID, document.itemID)
+                                    toggleButtonChecked.value = true
+                                },
+                                {
+                                    itemViewModel.removeLikedItems(userInfo.value!!.value.userID, document.itemID)
+                                    toggleButtonChecked.value = false
+                                },
                             )
                         } else {
                             // Show a loading indicator while the image is loading

@@ -115,7 +115,7 @@ fun ItemCategory(itemCategory: String,itemSubCategory: String) {
             textDecoration = TextDecoration.Underline
         )
         Text(
-            text = ">",
+            text = "•",
             fontFamily = archivoFonts,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-2).sp,
@@ -139,7 +139,7 @@ fun ItemName(itemName: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp, top = 10.dp),
+            .padding(start = 10.dp, top = 10.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(

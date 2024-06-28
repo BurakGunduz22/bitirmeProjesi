@@ -1,5 +1,6 @@
 package com.android.burakgunduz.bitirmeprojesi.screens.landingPage.landingPage
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,13 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,12 +18,14 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.burakgunduz.bitirmeprojesi.MainButtonForAuth
+import com.android.burakgunduz.bitirmeprojesi.R
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.colors.titleTextColorChanger
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 
@@ -50,19 +48,19 @@ fun LandingScreen(
             modifier = Modifier
                 .padding(iconSize.dp / 50)
         ) {
-            Card(
-                shape = CircleShape,
-                modifier = Modifier
-                    .size(iconSize.dp / 10)
-                    .padding(iconSize.dp / 100),
-                colors = iconCardColor(isDarkModeOn)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.MonetizationOn,
-                    contentDescription = "",
-                    modifier = Modifier.size(iconSize.dp / 8)
-                )
+            val image = if (isDarkModeOn) {
+                painterResource(id = R.drawable.saflogo)
+            } else {
+                painterResource(id = R.drawable.saflogo_light)
             }
+            Image(
+                painter = image,
+                contentDescription = "icon",
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 25.dp)
+            )
+
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -96,12 +94,23 @@ fun LandingScreen(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Already have an account?")
+            Text(
+                text = "ALREADY HAVE AN ACCOUNT?",
+                fontFamily = archivoFonts,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
             TextButton(onClick = {
                 screenNumber.value = 1
                 isLoading.value = true
             }) {
-                Text(text = "Login", textDecoration = TextDecoration.Underline)
+                Text(text = "LOGIN",
+                    textDecoration = TextDecoration.Underline,
+                    fontFamily = archivoFonts,
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,)
             }
         }
     }
@@ -111,9 +120,9 @@ fun LandingScreen(
 @Composable
 fun iconCardColor(isDarkModeOn: Boolean): CardColors {
     return if (!isDarkModeOn) {
-        CardDefaults.cardColors(containerColor = Color.White)
+        CardDefaults.cardColors(containerColor = Color.Transparent)
 
     } else {
-        CardDefaults.cardColors(containerColor = Color.Black)
+        CardDefaults.cardColors(containerColor = Color.Transparent)
     }
 }

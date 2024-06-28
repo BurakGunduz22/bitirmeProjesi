@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,7 +33,8 @@ fun LandingPage(
     navController: NavController,
     isDarkModeOn: Boolean,
     iconSize: Int,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
     val screenNumber = remember { mutableIntStateOf(0) }
     val cardExpanded = remember { mutableStateOf(false) }
@@ -76,7 +78,8 @@ fun LandingPage(
                         iconSize = iconSize,
                         screenNumber = screenNumber,
                         authViewModel = authViewModel,
-                        isLoading
+                        isLoading,
+                        snackbarHostState
                     )
 
                     2 -> RegisterScreen(
@@ -85,13 +88,15 @@ fun LandingPage(
                         screenNumber = screenNumber,
                         authViewModel = authViewModel,
                         cardShrank = cardExpanded,
-                        isLoading
+                        isLoading,
+                        snackbarHostState
                     )
                     3 -> ResetPasswordScreen(
                         isDarkModeOn = isDarkModeOn,
                         screenNumber = screenNumber,
                         authViewModel = authViewModel,
-                        isLoading =isLoading
+                        isLoading =isLoading,
+                        snackbarHostState = snackbarHostState,
                     )
                 }
             }

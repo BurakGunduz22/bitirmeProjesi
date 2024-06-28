@@ -1,6 +1,7 @@
 package com.android.burakgunduz.bitirmeprojesi.viewModels
 
 import android.content.ContentValues.TAG
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -142,5 +143,64 @@ class MessageViewModel : ViewModel() {
                 Log.w(TAG, "Error getting documents: ", exception)
             }
     }
+    private fun uploadPhoto(uri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+        val storageRef = fireStorageDB.reference.child("message_photos/${uri.lastPathSegment}")
+        val uploadTask = storageRef.putFile(uri)
+
+        uploadTask.addOnSuccessListener {
+            storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                onSuccess(downloadUri.toString())
+            }.addOnFailureListener { exception ->
+                onFailure(exception)
+            }
+        }.addOnFailureListener { exception ->
+            onFailure(exception)
+        }
+    }
+    fun sendPhotoMessage(
+        userID: String,
+        conversationUserID: String,
+        itemID: String,
+        photoUri: Uri
+    ) {
+        uploadPhoto(photoUri, { downloadUrl ->
+            // Create a new message with the photo URL
+            val photoMessage = Message(
+                senderID = userID,
+                receiverID = conversationUserID,
+                itemID = itemID,
+                message = "Photo: $downloadUrl", // Indicate that this message contains a photo
+                timestamp = Timestamp.now()
+            )
+            Log.d("New Photo Message", "Messages: $photoMessage")
+
+            // Save the message in Firestore
+            db.collection("messages")
+                .whereEqualTo("itemID", itemID)
+                .whereIn("senderID", listOf(userID, conversationUserID))
+                .whereIn("receiverID", listOf(userID, conversationUserID))
+                .get()
+                .addOnSuccessListener { result ->
+                    if (result.documents.isNotEmpty()) {
+                        db.collection("messages")
+                            .document(result.documents[0].id)
+                            .collection("messageContext")
+                            .add(photoMessage)
+                    } else {
+                        db.collection("messages")
+                            .add(photoMessage).addOnSuccessListener {
+                                Log.d("First Photo Message", "Messages: $it")
+                                db.collection("messages")
+                                    .document(it.id)
+                                    .collection("messageContext")
+                                    .add(photoMessage)
+                            }
+                    }
+                }
+        }, { exception ->
+            Log.e(TAG, "Error uploading photo: ", exception)
+        })
+    }
+
 
 }

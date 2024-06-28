@@ -10,7 +10,8 @@ data class User(
     val email: String = "",
     val password: String = "",
     val name: String = "",
-    val phoneNumber: String = ""
+    val phoneNumber: String = "",
+    val role: Int = 1
 )
 
 class AuthViewModel : ViewModel() {
@@ -49,7 +50,30 @@ class AuthViewModel : ViewModel() {
                 onCompletion(true, "")
             }
     }
-
+    fun checkIfEmailExists(
+        email: String,
+        onCompletion: (Boolean) -> Unit
+    ) {
+        db.collection("users").whereEqualTo("email",email).get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.e("EmailCheckSuccess", task.result.toString())
+                    if (task.result.isEmpty) {
+                        Log.e("EmailCheckSuccess", task.result.toString())
+                        // Email already existsz
+                        onCompletion(true)
+                    } else {
+                        Log.e("EmailCheckSuccess", task.result.toString())
+                        // Email does not exist
+                        onCompletion(false)
+                    }
+                } else {
+                    // Error occurred
+                    Log.w("EmailCheckFail", task.exception)
+                    onCompletion(false)
+                }
+            }
+    }
     fun addUserToDatabase(
         email: String,
         password: String,
@@ -68,6 +92,7 @@ class AuthViewModel : ViewModel() {
                     userData["password"] = password
                     userData["name"] = name
                     userData["phoneNumber"] = phoneNumber
+                    userData["role"] = 1
                     user?.let {
                         db.collection("users")
                             .document(it.uid)
@@ -85,8 +110,9 @@ class AuthViewModel : ViewModel() {
                             }
                     }
 
-                } else {
-                    onCompletion(false, auth.currentUser!!.uid)
+                }
+                else if (!task.isSuccessful) {
+                    onCompletion(true, "")
                     // If sign in fails, display a message to the user.
                     Log.w("RegisterFail", "createUserWithEmail:failure", task.exception)
 

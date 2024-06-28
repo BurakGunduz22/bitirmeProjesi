@@ -22,7 +22,8 @@ fun ListItemScreen(
     itemViewModel: ItemViewModel,
     locationViewModel: LocationViewModel,
     userID: String,
-    navigatorController: NavController
+    navigatorController: NavController,
+    isDarModeOn: Boolean
 ) {
     val countryNames = locationViewModel.countryNames.observeAsState()
     val screenNumber = remember { mutableIntStateOf(0) }
@@ -62,7 +63,8 @@ fun ListItemScreen(
                 countryNames = countryNames,
                 userID = userID,
                 screenNumber = screenNumber,
-                nextScreen = nextScreen
+                nextScreen = nextScreen,
+                isDarkModeOn = isDarModeOn
             )
         }
 

@@ -34,12 +34,14 @@ fun CategoryDropDownMenu(
     updatedData: MutableState<String>,
     items: List<Any>,
     isCategorySelected: Boolean,
-    nameOfDropBox: String
+    nameOfDropBox: String,
+    categoryName: String
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selected = remember { mutableStateOf("") }
+    val selected = remember { mutableStateOf(categoryName) }
     val filteredNames = rememberSaveable { mutableStateOf(items) }
 
+    val size = filteredNames.value.size
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -74,6 +76,10 @@ fun CategoryDropDownMenu(
                 expanded = false
                 updatedData.value = selected.value
             },
+            modifier = Modifier.height(
+                if (size > 3) 160.dp else ((50 * size) + 10).dp
+            )
+
         ) {
             filteredNames.value.map { item ->
                 DropdownMenuItem(
@@ -84,6 +90,7 @@ fun CategoryDropDownMenu(
                                 selected.value = item.categoryName
                                 updatedData.value = item.categoryID
                             }
+
                             is SubCategories -> {
                                 selected.value = item.subCategoryName
                                 updatedData.value = item.subCategoryID
@@ -103,4 +110,5 @@ fun CategoryDropDownMenu(
 
         }
     }
+
 }

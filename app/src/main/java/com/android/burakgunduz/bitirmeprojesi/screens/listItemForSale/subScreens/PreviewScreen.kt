@@ -33,8 +33,8 @@ import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components
 import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components.ItemName
 import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components.ItemPrice
 import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components.SellerProfile
-import com.android.burakgunduz.bitirmeprojesi.screens.itemDetailsPage.components.SendMessageToSellerButton
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
+import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
 import kotlinx.coroutines.delay
 
 
@@ -45,6 +45,7 @@ fun PreviewScreen(
     viewModel: ItemViewModel,
     isDarkModeOn: Boolean,
     currentUserID: String?,
+    messageViewModel: MessageViewModel
 ) {
     val itemDetailsViewModel = viewModel.itemDetails.observeAsState().value
     val itemImages = viewModel.itemImages.observeAsState().value
@@ -146,26 +147,6 @@ fun PreviewScreen(
                                 item { LinearProgressIndicator() }
                             }
                         }
-                        SendMessageToSellerButton(
-                            isDarkModeOn,
-                            navController,
-                            itemDetailsViewModel.userID,
-                            itemDetailsViewModel.itemID,
-                            currentUserID,
-                            toggleButtonChecked,
-                            {
-                                viewModel.addLikedItem(
-                                    currentUserID!!,
-                                    itemDetailsViewModel.itemID
-                                )
-                            },
-                            {
-                                viewModel.removeLikedItems(
-                                    currentUserID!!,
-                                    itemDetailsViewModel.itemID
-                                )
-                            }
-                        )
                     }
                 }
             }

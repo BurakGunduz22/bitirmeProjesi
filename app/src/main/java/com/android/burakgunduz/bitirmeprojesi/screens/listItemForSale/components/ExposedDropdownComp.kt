@@ -35,10 +35,12 @@ fun ExposedDropdownMenu(
     updatedData: MutableState<String>,
     items: List<Any>,
     isLocationFilled: Boolean,
-    nameOfDropBox: String
+    nameOfDropBox: String,
+    modifier: Modifier = Modifier,
+    locationString: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selected = remember { mutableStateOf("") }
+    val selected = remember { mutableStateOf(locationString) }
     val filteredNames = rememberSaveable { mutableStateOf(items) }
     val filteringOptions = derivedStateOf {
         filteredNames.value.filter {filter ->
@@ -56,6 +58,7 @@ fun ExposedDropdownMenu(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it },
+        modifier = modifier
     ) {
         OutlinedTextField(
             value = selected.value,
@@ -76,6 +79,7 @@ fun ExposedDropdownMenu(
                 Text(text = nameOfDropBox)
             },
             modifier = Modifier.menuAnchor(),
+            maxLines = 1
         )
         ExposedDropdownMenu(
             expanded = expanded,

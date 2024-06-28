@@ -14,11 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.House
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person2
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -40,8 +40,6 @@ import androidx.navigation.NavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun BottomNavigationBar(
@@ -81,10 +79,34 @@ fun BottomNavigationBar(
     }
     Log.e("pageDestination", "pageDestination: ${pageDestination.value}")
 
+    fun getIconColor(route: String): Color {
+        return when {
+            pageDestination.value == route -> Color(0xFF7203FF)
+            isDarkModeOn -> Color.White
+            else -> Color.Gray
+        }
+    }
+    fun getBackColor(route: String): Color {
+        return when {
+            pageDestination.value == route -> Color(0xFF7203FF)
+            isDarkModeOn -> Color(0xFF7203FF)
+            else -> Color(0xFFD9D9D9)
+        }
+    }
+    fun getCameraColor(route: String): Color {
+        return when {
+            pageDestination.value == route -> Color(0xFFFFFFFF)
+            isDarkModeOn -> Color(0xFF9586A8)
+            else -> Color(0xFF9586A8)
+        }
+    }
+
     if (pageDestination.value == "feedScreenNav/{userId}"
         || pageDestination.value == "sellerProfileScreen/{sellerProfileID}"
+        || pageDestination.value == "favoriteScreenNav"
+        || pageDestination.value == "searchScreen"
+        || pageDestination.value == "userProfileScreen/{sellerProfileID}"
     ) {
-
         NavigationBar(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,42 +119,57 @@ fun BottomNavigationBar(
             ) {
                 IconButton(onClick = { navController.navigate("feedScreenNav/${auth.currentUser?.uid}") }) {
                     Icon(
-                        imageVector = Icons.Outlined.House,
+                        imageVector = Icons.Outlined.Home,
                         contentDescription = "Feed",
-                        modifier = Modifier.size(25.dp)
+                        modifier = Modifier.size(25.dp),
+                        tint = getIconColor("feedScreenNav/{userId}")
                     )
                 }
+
+//                IconButton(onClick = {
+//                    navController.navigate("landingPageNav")
+//                    coroutineContext.launch {
+//                        delay(1000)
+//                        userInfosFar.value = null
+//                        googleSignInClient.signOut()
+//                        auth.signOut()
+//                    }
+//                    Log.e("UserLogOut", "User is logged out:${userInfosFar.value}")
+//                })
+//                {
+//                    Icon(
+//                        imageVector = Icons.AutoMirrored.Outlined.Logout,
+//                        contentDescription = "Logout",
+//                        modifier = Modifier.size(25.dp),
+//                        tint = getIconColor("landingPageNav")
+//                    )
+//                }
                 IconButton(onClick = {
-                    navController.navigate("landingPageNav")
-                    coroutineContext.launch {
-                        delay(1000)
-                        userInfosFar.value = null
-                        googleSignInClient.signOut()
-                        auth.signOut()
-                    }
+                    navController.navigate("searchScreen")
                     Log.e("UserLogOut", "User is logged out:${userInfosFar.value}")
                 })
                 {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.Logout,
-                        contentDescription = "Logout",
-                        modifier = Modifier.size(25.dp)
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = "Search",
+                        modifier = Modifier.size(25.dp),
+                        tint = getIconColor("searchScreen")
                     )
                 }
                 Box(
                     modifier = Modifier
                         .padding(0.dp)
-                        .size(80.dp)
+                        .size(55.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF8A3CCE))
+                        .background(getBackColor("listItemScreenNav"))
                         .clickable { navController.navigate("listItemScreenNav") },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.CameraAlt,
                         contentDescription = "List Item",
-                        modifier = Modifier.size(25.dp)
-
+                        modifier = Modifier.size(35.dp),
+                        tint = getCameraColor("listItemScreenNav")
                     )
                 }
                 IconButton(onClick = {
@@ -142,7 +179,8 @@ fun BottomNavigationBar(
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
                         contentDescription = "Profile",
-                        modifier = Modifier.size(25.dp)
+                        modifier = Modifier.size(25.dp),
+                        tint = getIconColor("favoriteScreenNav")
                     )
                 }
                 IconButton(onClick = {
@@ -152,12 +190,11 @@ fun BottomNavigationBar(
                     Icon(
                         imageVector = Icons.Outlined.Person2,
                         contentDescription = "Profile",
-                        modifier = Modifier.size(25.dp)
+                        modifier = Modifier.size(25.dp),
+                        tint = getIconColor("userProfileScreen/{sellerProfileID}")
                     )
                 }
             }
-
-
         }
     }
 }

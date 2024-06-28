@@ -8,12 +8,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class Item(
     var itemName: String = "",
@@ -80,19 +85,33 @@ class ItemViewModel : ViewModel() {
     val subCategoriesList = MutableLiveData<List<SubCategories>>()
     fun loadItems(stopItem: (Boolean) -> Unit) {
         db.collection("itemsOnSale")
-            .limit(15)
             .get()
             .addOnSuccessListener { documents ->
-                val itemsList = documents.mapNotNull { document ->
-                    document.toObject(ItemCard::class.java).copy(itemID = document.id)
+                val tasks = documents.map { document ->
+                    val itemCard = document.toObject(ItemCard::class.java).copy(itemID = document.id)
+                    db.collection("itemCategories")
+                        .document(itemCard.itemCategory)
+                        .get()
+                        .continueWith { task ->
+                            if (task.isSuccessful) {
+                                val categoryDocument = task.result
+                                val categoryName = categoryDocument?.getString("categoryName")
+                                itemCard.copy(itemCategory = categoryName ?: "Unknown")
+                            } else {
+                                itemCard
+                            }
+                        }
                 }
-                itemsOnSale.value = itemsList
-                stopItem(true)
+                Tasks.whenAllSuccess<ItemCard>(tasks).addOnSuccessListener { items ->
+                    itemsOnSale.value = items as List<ItemCard>
+                    stopItem(true)
+                }
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents: ", exception)
             }
     }
+
 
     fun loadShowcaseImages(itemsList: List<ItemCard>, stopItem: (Boolean) -> Unit) {
         val tasks = itemsList.map { itemCard ->
@@ -106,7 +125,6 @@ class ItemViewModel : ViewModel() {
             stopItem(true)
         }
     }
-
     fun loadItemDetails(itemID: String, isItemSame: Boolean) {
         val itemTemp = itemDetails.value
         val itemRef = db.collection("itemsOnSale").document(itemID)
@@ -146,7 +164,7 @@ class ItemViewModel : ViewModel() {
             Log.d("ItemViewModel", "loadItemDetails: Item already loaded")
         }
     }
-    private fun loadItemCategory(itemCategory: String, callback: (String) -> Unit){
+    fun loadItemCategory(itemCategory: String, callback: (String) -> Unit){
         db.collection("itemCategories")
             .document(itemCategory)
             .get()
@@ -194,7 +212,7 @@ class ItemViewModel : ViewModel() {
                 Log.w(TAG, "Error getting documents: ", exception)
             }
     }
-    private fun loadSubCategory(itemCategory: String, itemSubCategory: String, callback: (String) -> Unit){
+    fun loadSubCategory(itemCategory: String, itemSubCategory: String, callback: (String) -> Unit){
         db.collection("itemCategories")
             .document(itemCategory)
             .collection("subCategories")
@@ -211,15 +229,18 @@ class ItemViewModel : ViewModel() {
     }
     fun loadItemImages(itemID: String, isItemSame: Boolean) {
         if (!isItemSame) {
-            itemImages.value = emptyList()
             val itemImageRef = storageRef.child("itemImages/$itemID")
             itemImageRef.listAll().addOnSuccessListener { listResult ->
-                listResult.items.forEach { item ->
+                val namedUriList = mutableListOf<NamedUri>()
+                for (item in listResult.items) {
                     item.downloadUrl.addOnSuccessListener { uri ->
                         val namedUri = NamedUri(item.name.split(".").first(), uri)
-                        val currentList = itemImages.value ?: emptyList()
-                        val updatedList = currentList + namedUri
-                        itemImages.value = updatedList.sortedBy { it.name.toInt() }
+                        namedUriList.add(namedUri)
+                    }.addOnCompleteListener {
+                        // When all downloadUrl tasks are complete, update itemImages.value
+                        if (namedUriList.size == listResult.items.size) {
+                            itemImages.value = namedUriList.sortedBy { it.name.toInt() }
+                        }
                     }
                 }
             }
@@ -227,7 +248,13 @@ class ItemViewModel : ViewModel() {
             Log.d("ItemViewModel", "loadItemImages: Images already loaded")
         }
     }
+    fun loadShowCaseImage(itemID: String, callback: (Uri) -> Unit) {
+        val itemImageRef = storageRef.child("itemImages/$itemID/0.png")
+        itemImageRef.downloadUrl.addOnSuccessListener { uri ->
+            callback(uri)
+        }
 
+    }
     fun getSellerProfile(userID: String) {
         val itemStorageRef = storageRef.child("userProfileImages")
         db.collection("users")
@@ -242,6 +269,8 @@ class ItemViewModel : ViewModel() {
                 itemStorageRef.child("$userID/1.png").downloadUrl
                     .addOnSuccessListener {
                         sellerImage.value = it
+                        Log.d("SellerImage", "SellerImage: $it")
+                        Log.d("SellerProfile", "SellerProfile: ${sellerProfile.value}")
                     }
             }
             .addOnFailureListener { exception ->
@@ -255,10 +284,24 @@ class ItemViewModel : ViewModel() {
             .whereEqualTo("userID", userID)
             .get()
             .addOnSuccessListener { documents ->
-                val itemsList = documents.mapNotNull { document ->
-                    document.toObject(ItemCard::class.java).copy(itemID = document.id)
+                val tasks = documents.documents.map { document ->
+                    val itemCard = document.toObject(ItemCard::class.java)?.copy(itemID = document.id)
+                    db.collection("itemCategories")
+                        .document(itemCard?.itemCategory ?: "")
+                        .get()
+                        .continueWith { task ->
+                            if (task.isSuccessful) {
+                                val categoryDocument = task.result
+                                val categoryName = categoryDocument?.getString("categoryName")
+                                itemCard?.copy(itemCategory = categoryName ?: "Unknown")
+                            } else {
+                                itemCard
+                            }
+                        }
                 }
-                itemsOnSale.value = itemsList
+                Tasks.whenAllSuccess<ItemCard>(tasks).addOnSuccessListener { items ->
+                    itemsOnSale.value = items.filterNotNull()
+                }
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents: ", exception)
@@ -338,7 +381,26 @@ class ItemViewModel : ViewModel() {
                 itemLiked(false)
             }
     }
+    private val likedItemsCache = mutableStateOf<Map<String, Boolean>>(emptyMap())
 
+    fun loadLikedItems(userID: String, callback: () -> Unit) {
+        db.collection("users")
+            .document(userID)
+            .collection("likedItems")
+            .get()
+            .addOnSuccessListener { documents ->
+                val likedItemsMap = documents.associate { it.id to true }
+                likedItemsCache.value = likedItemsMap
+                callback()
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting liked items: ", exception)
+            }
+    }
+
+    fun isItemLiked(itemID: String): Boolean {
+        return likedItemsCache.value[itemID] == true
+    }
     fun checkLikedItems(userID: String, isItemLoaded: (Boolean) -> Unit) {
         val likedItemList = mutableListOf<ItemCard>()
         db.collection("users")
@@ -352,18 +414,38 @@ class ItemViewModel : ViewModel() {
                     db.collection("itemsOnSale")
                         .document(document.id)
                         .get()
-                        .addOnSuccessListener { documents ->
-                            val itemsList =
-                                documents.toObject(ItemCard::class.java)?.copy(itemID = document.id)
-                            likedItemList.add(itemsList!!)
+                        .continueWith { task ->
+                            if (task.isSuccessful) {
+                                val itemDocument = task.result
+                                val itemCard = itemDocument?.toObject(ItemCard::class.java)?.copy(itemID = document.id)
+                                itemCard
+                            } else {
+                                null
+                            }
                         }
-                        .addOnFailureListener { exception ->
-                            Log.w(TAG, "Error getting documents: ", exception)
+                        .continueWithTask { task ->
+                            val itemCard = task.result
+                            if (itemCard != null) {
+                                db.collection("itemCategories")
+                                    .document(itemCard.itemCategory)
+                                    .get()
+                                    .continueWith { categoryTask ->
+                                        if (categoryTask.isSuccessful) {
+                                            val categoryDocument = categoryTask.result
+                                            val categoryName = categoryDocument?.getString("categoryName")
+                                            itemCard.copy(itemCategory = categoryName ?: "Unknown")
+                                        } else {
+                                            itemCard
+                                        }
+                                    }
+                            } else {
+                                Tasks.forResult(null)
+                            }
                         }
                 }
-                Tasks.whenAllSuccess<Uri>(tasks).addOnSuccessListener {
-                    itemsOnSale.value = likedItemList
-                    Log.e("LikedItems", likedItemList.toString())
+                Tasks.whenAllSuccess<ItemCard>(tasks).addOnSuccessListener { items ->
+                    itemsOnSale.value = items.filterNotNull()
+                    Log.e("LikedItems", itemsOnSale.value.toString())
                     isItemLoaded(true)
                 }
             }
@@ -413,15 +495,15 @@ class ItemViewModel : ViewModel() {
             itemName = itemDetails[0],
             itemBrand = itemDetails[1],
             itemCategory = itemDetails[2],
-            itemDesc = itemDetails[3],
-            itemPrice = itemDetails[4].toInt(),
-            itemCondition = itemDetails[5].toInt(),
-            itemCountry = itemDetails[6],
-            itemCity = itemDetails[7],
-            itemTown = itemDetails[8],
-            itemDistrict = itemDetails[9],
-            itemStreet = itemDetails[10],
-            itemSubCategory = "",
+            itemDesc = itemDetails[4],
+            itemPrice = itemDetails[5].toInt(),
+            itemCondition = itemDetails[6].toInt(),
+            itemCountry = itemDetails[7],
+            itemCity = itemDetails[8],
+            itemTown = itemDetails[9],
+            itemDistrict = itemDetails[10],
+            itemStreet = itemDetails[11],
+            itemSubCategory = itemDetails[3],
             itemDate = Timestamp.now(),
             itemID = "",
             userID = userID,
@@ -429,5 +511,80 @@ class ItemViewModel : ViewModel() {
             likeCount = 0
         )
     }
+
+    fun getItemName(itemID: String, itemName: (String)->Unit) {
+        db.collection("itemsOnSale")
+            .document(itemID)
+            .get()
+            .addOnSuccessListener { document ->
+                document.getString("itemName")?.let { itemName(it) }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents: ", exception)
+            }
+    }
+    fun getUserIDFromItemID(itemID: String, callback: (String?) -> Unit) {
+        db.collection("itemsOnSale")
+            .document(itemID)
+            .get()
+            .addOnSuccessListener { document ->
+                val userID = document.getString("userID")
+                callback(userID)
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting userID from itemID: $itemID", exception)
+                callback(null)
+            }
+    }
+    private val _items = MutableStateFlow<List<ItemCard>>(emptyList())
+    val items: StateFlow<List<ItemCard>> get() = _items
+
+    suspend fun searchItemsIn(query: String, callback: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _items.value = searchItems(query){
+                callback(it)
+            }
+        }
+    }
+
+    suspend fun searchItems(query: String, callback: (Boolean) -> Unit): List<ItemCard> {
+        return try {
+            // Fetch all items from the Firestore database
+            val allItems = db.collection("itemsOnSale")
+                .get()
+                .await()
+                .documents
+                .map { document ->
+                    val itemCard = document.toObject(ItemCard::class.java)?.copy(itemID = document.id)
+                    itemCard
+                }
+
+            // Fetch category names for each item
+            val tasks = allItems.map { itemCard ->
+                db.collection("itemCategories")
+                    .document(itemCard?.itemCategory ?: "")
+                    .get()
+                    .continueWith { task ->
+                        if (task.isSuccessful) {
+                            val categoryDocument = task.result
+                            val categoryName = categoryDocument?.getString("categoryName")
+                            itemCard?.copy(itemCategory = categoryName ?: "Unknown")
+                        } else {
+                            itemCard
+                        }
+                    }
+            }
+
+            val itemsWithCategories = Tasks.whenAllSuccess<ItemCard>(tasks).await()
+
+            callback(true)
+
+            // Filter items locally based on the query
+            itemsWithCategories.filter { it.itemName.contains(query, ignoreCase = true) }
+        } catch (e: Exception) {
+            emptyList<ItemCard>()
+        }
+    }
+
 
 }

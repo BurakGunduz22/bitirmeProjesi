@@ -39,6 +39,7 @@ import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components
 import com.android.burakgunduz.bitirmeprojesi.screens.listItemForSale.components.ProgressBar
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
+import com.android.burakgunduz.bitirmeprojesi.viewModels.SubCategories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -66,9 +67,43 @@ fun ListItemDetails(
     if (itemCategories.value.isNullOrEmpty()) {
         itemViewModel.loadItemCategories()
     }
-    val subCategoriesList = itemSubCategories.value?.map { it } ?: listOf()
+    val subCategoriesList = remember { mutableListOf<SubCategories>() }
+    val loadItemNames = remember {
+        mutableStateOf(false)
+    }
     val categoryList = itemCategories.value?.map { it } ?: listOf()
     val focusManager = LocalFocusManager.current
+    val categoryLoaded = remember {
+        mutableStateOf(false)
+    }
+    val itemCategoryName = remember {
+        mutableStateOf("")
+    }
+    val itemSubCategoryName = remember {
+        mutableStateOf("")
+    }
+    LaunchedEffect(itemCategory.value) {
+        if (itemCategory.value.isNotEmpty()) {
+            val category = categoryList.find { it.categoryID == itemCategory.value }
+            itemCategoryName.value = category?.categoryName ?: ""
+            // Load subcategories when category changes
+            coroutineScope.launch {
+                itemViewModel.loadSubItemCategories(itemCategory.value)
+                categoryLoaded.value = true
+            }
+        }
+    }
+
+    LaunchedEffect(itemSubCategories.value) {
+        subCategoriesList.clear() // Clear subcategories
+        subCategoriesList.addAll(itemSubCategories.value ?: listOf())
+
+        if (!itemSubCategory.value.isNullOrEmpty()) {
+            val subCategory = subCategoriesList.find { it.subCategoryID == itemSubCategory.value }
+            itemSubCategoryName.value = subCategory?.subCategoryName ?: ""
+        }
+    }
+
 
     Log.e("LogDetails", itemDetails.toString())
     Log.e("isNextScreen", nextScreen.toString())
@@ -123,7 +158,8 @@ fun ListItemDetails(
                         fieldName = "Title",
                         fieldValue = title.value,
                         onValueChange = { title.value = it },
-                        focusManager = focusManager
+                        focusManager = focusManager,
+                        maxLength = 50
                     )
                     ItemDetailsTextfield(
                         fieldName = "Brand",
@@ -135,20 +171,28 @@ fun ListItemDetails(
                         updatedData = itemCategory,
                         items = categoryList,
                         isCategorySelected = !categoryList.isNullOrEmpty(),
-                        nameOfDropBox = "Category"
+                        nameOfDropBox = "Category",
+                        categoryName = itemCategoryName.value
                     )
+                    // Load subcategories when category changes
                     LaunchedEffect(itemCategory.value) {
                         if (itemCategory.value.isNotEmpty()) {
                             coroutineScope.launch {
                                 itemViewModel.loadSubItemCategories(itemCategory.value)
+                                categoryLoaded.value = true
                             }
                         }
+                    }
+                    LaunchedEffect(itemSubCategories.value) {
+                        subCategoriesList.clear() // Clear subcategories
+                        subCategoriesList.addAll(itemSubCategories.value ?: listOf())
                     }
                     CategoryDropDownMenu(
                         updatedData = itemSubCategory,
                         items = subCategoriesList,
-                        isCategorySelected = !subCategoriesList.isNullOrEmpty(),
-                        nameOfDropBox = "Sub-Category"
+                        isCategorySelected = categoryLoaded.value,
+                        nameOfDropBox = "Sub-Category",
+                        categoryName = itemSubCategoryName.value
                     )
                     ItemDetailsTextfield(
                         fieldName = "Price",
@@ -263,5 +307,4 @@ fun ListItemDetails(
             }
         )
     }
-
 }

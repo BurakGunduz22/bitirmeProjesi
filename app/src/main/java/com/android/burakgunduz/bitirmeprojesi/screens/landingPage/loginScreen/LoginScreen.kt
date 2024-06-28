@@ -1,7 +1,9 @@
 package com.android.burakgunduz.bitirmeprojesi.screens.landingPage.loginScreen
 
 import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,21 +24,27 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.MainButtonForAuth
+import com.android.burakgunduz.bitirmeprojesi.SnackBarFile
 import com.android.burakgunduz.bitirmeprojesi.TextFieldForAuth
 import com.android.burakgunduz.bitirmeprojesi.authKeyboardType
 import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.components.GoogleAuthButton
 import com.android.burakgunduz.bitirmeprojesi.screens.landingPage.landingPage.iconCardColor
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
+import kotlinx.coroutines.CoroutineScope
 
 
 @Composable
@@ -46,11 +55,15 @@ fun LoginScreen(
     iconSize: Int,
     screenNumber: MutableState<Int>,
     authViewModel: AuthViewModel,
-    isLoading: MutableState<Boolean>
+    isLoading: MutableState<Boolean>,
+    snackbarHostState: SnackbarHostState,
 ) {
     var mailInputString by remember { mutableStateOf("") }
     var passwordInputString by remember { mutableStateOf("") }
     val invalidUserInfo = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -63,14 +76,19 @@ fun LoginScreen(
             Card(
                 shape = CircleShape,
                 modifier = Modifier
-                    .size(iconSize.dp / 10),
+                    .size(iconSize.dp / 10)
+                    .border(2.dp, Color.Gray, CircleShape), // Add this line to create a border
                 colors = iconCardColor(isDarkModeOn)
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "",
-                    modifier = Modifier.size(iconSize.dp / 8)
-                )
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(iconSize.dp / 8)
+                            .padding(3.dp),
+                    )
+                }
             }
             Column(
                 verticalArrangement = Arrangement.Center,
@@ -83,14 +101,16 @@ fun LoginScreen(
                     fontWeight = FontWeight.ExtraBold,
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Left,
-                    modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 5.dp)
+                    modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 5.dp),
+                    letterSpacing = (-1).sp,
                 )
             }
         }
         TextFieldForAuth(
             takeAuthValue = mailInputString,
             labelText = "Email",
-            authKeyboardType("email")
+            keyboardOpt = authKeyboardType("email"),
+            focusManager = focusManager
         ) {
             mailInputString = it
         }
@@ -98,7 +118,8 @@ fun LoginScreen(
             takeAuthValue = passwordInputString,
             labelText = "Password",
             authKeyboardType("password"),
-            fieldSpace = 30,
+            focusManager = focusManager,
+            fieldCount = 2
         ) {
             passwordInputString = it
         }
@@ -109,31 +130,52 @@ fun LoginScreen(
                     passwordInputString,
                     navController,
                     invalidUserInfo.value,
-                    authViewModel
+                    authViewModel,
+                    snackbarHostState,
+                    coroutineScope
                 )
             },
             isDarkModeOn = isDarkModeOn,
             buttonText = "LOGIN"
         )
-        GoogleAuthButton(navController, isDarkModeOn,"Login with Google")
+        GoogleAuthButton(navController, isDarkModeOn, "Login with Google")
         TextButton(onClick = {
             screenNumber.value = 3
             isLoading.value = true
         }) {
-            Text(text = "Forgot Password?")
+            Text(
+                text = "FORGOT PASSWORD?",
+                fontFamily = archivoFonts,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Don't you have an account?")
+            Text(
+                text = "DON'T YOU HAVE AN ACCOUNT?",
+                fontFamily = archivoFonts,
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
             TextButton(onClick = {
                 screenNumber.value = 2
                 cardExpanded.value = !cardExpanded.value
                 isLoading.value = true
             }) {
-                Text(text = "Sign Up", textDecoration = TextDecoration.Underline)
+                Text(
+                    text = "SIGN UP",
+                    textDecoration = TextDecoration.Underline,
+                    fontFamily = archivoFonts,
+                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }
@@ -144,26 +186,44 @@ fun login(
     passwordInputString: String,
     navController: NavController,
     invalidUserInfo: Boolean,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    snackbarHostState: SnackbarHostState,
+    coroutineScope: CoroutineScope
 ) {
-    authViewModel.getAuth(
-        mailInputString,
-        passwordInputString,
-    ) { isCompleted, userID ->
-        if (!isCompleted) {
-            Log.e("LoginScreen", "Login button clicked")
-            navController.navigate("feedScreenNav/{$userID}") {
-                popUpTo("loginScreenNav") {
-                    inclusive = true
+    if (mailInputString.isBlank() || passwordInputString.isBlank()) {
+        SnackBarFile(
+            coroutineScope,
+            snackbarHostState,
+            "Email or password cannot be empty",
+            "Short"
+        )
+        Log.e("LoginScreen", "Email or password cannot be empty")
+    } else {
+        authViewModel.getAuth(
+            mailInputString,
+            passwordInputString,
+        ) { isCompleted, userID ->
+            if (!isCompleted) {
+                Log.e("LoginScreen", "Login button clicked")
+                navController.navigate("feedScreenNav/{$userID}") {
+                    popUpTo("loginScreenNav") {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
                 }
-                launchSingleTop = true
+            } else {
+                SnackBarFile(
+                    coroutineScope,
+                    snackbarHostState,
+                    "Invalid user info",
+                    "Short"
+                )
+                Log.e("LoginScreen", "Invalid user info")
             }
-        } else {
-            Log.e("LoginScreen", "Invalid user info")
         }
+        Log.e(
+            "InvalidInfo",
+            "$invalidUserInfo This is the value of invalidUserInfo"
+        )
     }
-    Log.e(
-        "InvalidInfo",
-        "$invalidUserInfo This is the value of invalidUserInfo"
-    )
 }

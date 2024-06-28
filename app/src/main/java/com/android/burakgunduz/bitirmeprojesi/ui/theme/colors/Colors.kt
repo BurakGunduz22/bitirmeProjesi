@@ -95,7 +95,7 @@ fun favoriteColorChanger(isDarkModeOn: Boolean): IconButtonColors {
     return if (isDarkModeOn) {
         IconButtonColors(
             containerColor = Color.Transparent,
-            contentColor = Color.Gray,
+            contentColor = Color.White,
             disabledContentColor = Color(0xFF4B4949),
             disabledContainerColor = Color(0xFF4B4949),
         )
