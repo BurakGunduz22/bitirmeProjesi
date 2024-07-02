@@ -27,8 +27,7 @@ fun ListItemScreen(
 ) {
     val countryNames = locationViewModel.countryNames.observeAsState()
     val screenNumber = remember { mutableIntStateOf(0) }
-    val emptyUri = Uri.EMPTY
-    val images = remember { MutableList(6) { emptyUri } }
+    val images = remember { MutableList(6) { Uri.EMPTY } }
     val coroutineScope = rememberCoroutineScope()
     val item = remember { MutableList(7) { "" } }
     val itemLocation = remember { MutableList(5) { "" } }
@@ -64,7 +63,8 @@ fun ListItemScreen(
                 userID = userID,
                 screenNumber = screenNumber,
                 nextScreen = nextScreen,
-                isDarkModeOn = isDarModeOn
+                isDarkModeOn = isDarModeOn,
+                navController = navigatorController
             )
         }
 

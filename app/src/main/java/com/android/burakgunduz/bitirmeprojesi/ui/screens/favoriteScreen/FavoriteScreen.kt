@@ -33,7 +33,7 @@ fun FavoriteScreen(
 ) {
     val isItemsLoaded = remember { mutableStateOf(false) }
     val isItemsImagesLoaded = remember { mutableStateOf(false) }
-    val itemsOnSale = viewModel.itemsOnSale.observeAsState().value
+    val itemsOnSale = viewModel.likedItems.observeAsState().value
     val itemShowcaseImage = viewModel.itemShowcaseImages.observeAsState().value
     LaunchedEffect(isItemsLoaded) {
         viewModel.checkLikedItems(userID) {
@@ -87,6 +87,7 @@ fun FavoriteScreen(
                                     document.itemID
                                 )
                             },
+                            userID == document.userID,
                         )
                     }
                 }

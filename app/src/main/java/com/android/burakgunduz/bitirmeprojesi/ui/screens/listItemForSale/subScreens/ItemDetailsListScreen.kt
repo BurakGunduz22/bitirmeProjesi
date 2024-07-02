@@ -152,6 +152,7 @@ fun ListItemDetails(
                                     condition.value
                                 )
                             )
+                            nextScreen.value = false
                         }
                     }
                     ItemDetailsTextfield(
@@ -197,10 +198,15 @@ fun ListItemDetails(
                     ItemDetailsTextfield(
                         fieldName = "Price",
                         fieldValue = price.value,
-                        onValueChange = { price.value = it },
+                        onValueChange = { newText ->
+                            if (newText.all { it.isDigit() }) {
+                                price.value = newText
+                            }
+                        },
                         focusManager = focusManager,
                         keyboardOptions = KeyboardType.Number,
-                        suffixText = "€"
+                        suffixText = "€",
+                        maxLength = 6
                     )
                     ItemDetailsTextfield(
                         fieldName = "Description",
@@ -211,7 +217,7 @@ fun ListItemDetails(
                         maxLineCount = 6,
                         focusManager = focusManager,
                         cornerRound = 8,
-                        maxLength = 200
+                        maxLength = 400
                     )
                     ExposedDropdownMenuBox(
                         expanded = dropControl.value,

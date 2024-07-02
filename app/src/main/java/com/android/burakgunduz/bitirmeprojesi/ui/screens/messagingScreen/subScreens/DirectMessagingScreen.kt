@@ -1,6 +1,7 @@
 package com.android.burakgunduz.bitirmeprojesi.ui.screens.messagingScreen.subScreens
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,62 +77,72 @@ fun DirectMessagingScreen(
     itemViewModel: ItemViewModel,
 ) {
     // Retrieve message list from ViewModel
-    val messageList = viewModel.directMessages.observeAsState().value
+    val messageList by viewModel.directMessages.observeAsState(emptyList())
     val messageListEdit = remember { mutableStateOf(messageList) }
     val userName = remember { mutableStateOf("") }
     // State for the current typed message
     val messageContext = remember { mutableStateOf("") }
-    val itemIDForUser = remember {
-        mutableStateOf("")
-    }
-    val userIDofItem = remember {
-        mutableStateOf("")
-    }
-    val itemImage = remember {
-        mutableStateOf(Uri.EMPTY)
-    }
-    val itemName = remember {
-        mutableStateOf("")
-    }
+    val itemIDForUser = remember { mutableStateOf("") }
+    val userIDofItem = remember { mutableStateOf("") }
+    val itemImage = remember { mutableStateOf(Uri.EMPTY) }
+    val itemName = remember { mutableStateOf("") }
+    val isProfilePictureLoaded = remember { mutableStateOf(false) }
+    val loading = remember { mutableStateOf(true) }
+    val receiverID = navBack.arguments?.getString("receiverID")
+    val conversationUserID = navBack.arguments?.getString("conversationUserID")
+    val buyerID= if(conversationUserID == userIDInfo ){ receiverID} else {conversationUserID}
     val sellerProfile = itemViewModel.sellerProfile.observeAsState().value
     val sellerImage = itemViewModel.sellerImage.observeAsState().value
+
     // Scroll state for LazyColumn
     val scrollState = rememberLazyListState()
-
+    Log.e("DirectMessagingScreen", "DirectMessagingScreen: ${buyerID}")
     // Launch effect to load messages and scroll to bottom
-    LaunchedEffect(messageListEdit) {
-        scrollState.scrollToItem(messageListEdit.value?.size ?: 0)
-    }
 
     // Launch effect to load messages when necessary
     LaunchedEffect(Unit) {
         navBack.arguments?.let { args ->
-            val receiverID = args.getString("receiverID")
+
             val itemID = args.getString("itemID")
             itemIDForUser.value = itemID.toString()
-            val conversationUserID = args.getString("conversationUserID")
             userName.value = args.getString("messagerName").toString()
             itemName.value = args.getString("itemName").toString()
 
+
             if (userIDInfo != null && receiverID != null && itemID != null && conversationUserID != null) {
+                loading.value = true
                 if (userIDInfo != receiverID) {
-                    viewModel.getDirectMessages(receiverID, itemID, conversationUserID)
+                    viewModel.getDirectMessages(receiverID, itemID, conversationUserID) {
+                        loading.value = false
+                    }
                 } else {
-                    viewModel.getDirectMessages(userIDInfo, itemID, conversationUserID)
+                    viewModel.getDirectMessages(userIDInfo, itemID, conversationUserID) {
+                        loading.value = false
+                    }
                 }
             }
+        }
+    }
+    if (messageList.isEmpty()){
+        loading.value = false
+    }
+    LaunchedEffect(isProfilePictureLoaded) {
+        if (!isProfilePictureLoaded.value) {
+            itemViewModel.getSellerProfile(buyerID ?: "")
+            isProfilePictureLoaded.value = true
         }
     }
     LaunchedEffect(Unit) {
         itemViewModel.getUserIDFromItemID(itemIDForUser.value) {
             userIDofItem.value = it ?: ""
-            itemViewModel.getSellerProfile(userIDofItem.value)
+            itemViewModel.getSellerProfile(buyerID ?: "")
         }
         itemViewModel.loadShowCaseImage(itemIDForUser.value) {
             itemImage.value = it
         }
-
     }
+
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -141,7 +153,7 @@ fun DirectMessagingScreen(
                 isItDirectMessage = true,
                 userName = userName.value ?: "",
                 userImageUrl = sellerImage ?: Uri.EMPTY,
-                sellerID = userIDofItem.value
+                sellerID = buyerID ?: "",
             )
             OutlinedCard(
                 modifier = Modifier
@@ -168,7 +180,7 @@ fun DirectMessagingScreen(
                             .fillMaxWidth()
                     ) {
                         // Display item image
-                        sellerImage?.let { imageUrl ->
+                        sellerImage?.let {
                             // Assuming you have a composable function to load image from Uri
                             // Replace this with your actual image loading logic
                             SubcomposeAsyncImage(
@@ -179,7 +191,6 @@ fun DirectMessagingScreen(
                                     .padding(10.dp)
                                     .size(100.dp)
                                     .clip(shape = AbsoluteRoundedCornerShape(8))
-
                             ) {
                                 val state = painter.state
                                 when (state) {
@@ -214,23 +225,36 @@ fun DirectMessagingScreen(
                         )
                     }
                 }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = scrollState
-                ) {
-                    val sortedMessageList = messageListEdit.value?.sortedBy { it.timestamp }
-                    sortedMessageList?.groupByDay()?.forEach { (day, messages) ->
-                        // Date separator
-                        item {
-                            DateSeparator(date = day)
-                        }
-                        // Messages for the day
-                        itemsIndexed(messages) { _, message ->
-                            MessageBubble(
-                                message = message.message,
-                                isOwnMessage = message.senderID == userIDInfo,
-                                messageDate = message.timestamp,
-                            )
+                if (loading.value) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LaunchedEffect(messageList) {
+                        scrollState.scrollToItem((messageList.size+3) ?: 0)
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = scrollState
+                    ) {
+                        val sortedMessageList = messageList.sortedBy { it.timestamp }
+                        sortedMessageList.groupByDay().forEach { (day, messages) ->
+                            // Date separator
+                            item {
+                                DateSeparator(date = day)
+                            }
+                            // Messages for the day
+                            itemsIndexed(messages) { _, message ->
+                                MessageBubble(
+                                    message = message.message,
+                                    isOwnMessage = message.senderID == userIDInfo,
+                                    messageDate = message.timestamp,
+                                )
+                            }
                         }
                     }
                 }
@@ -243,9 +267,11 @@ fun DirectMessagingScreen(
                 viewModel = viewModel,
                 messageList = messageListEdit
             )
+
         }
     }
 }
+
 
 @Composable
 fun DateSeparator(date: Date) {

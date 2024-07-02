@@ -59,51 +59,45 @@ fun addImage(
     countryNames: State<List<CountryInfo>?>
 ) {
     coroutineScope.launch {
+        pageIndex.intValue = page
         val activityOptionsCompat: ActivityOptionsCompat =
             ActivityOptionsCompat.makeSceneTransitionAnimation(
                 context as Activity
             )
         galleryLauncher.launch("image/*", activityOptionsCompat)
-        pageIndex.intValue = page
-        images[page] = tempPhoto.value
         if (countryNames.value == null) {
             locationViewModel.fetchCountryNames()
         }
     }
+    Log.e("GalleryLauncher", images.toString())
 }
 
-fun captureAPhoto(
-    context: Context,
-    onePhotoTaker: ManagedActivityResultLauncher<Uri, Boolean>,
-    images: MutableList<Uri>,
-    pageIndex: MutableIntState,
-    photoTakenSuccess: MutableState<Boolean>,
-) {
-    val imageUri = bitmapToUri(context)
-    Log.e("PhotoNumber", pageIndex.toString())
-    onePhotoTaker.launch(imageUri)
-    if (pageIndex.intValue != -1) {
-        images[pageIndex.intValue] = imageUri
-    }
-}
 fun photoTaken(
     images: MutableList<Uri>,
     context: Context,
     pageIndex: MutableIntState,
     photoTakenSuccess: MutableState<Boolean>,
     onePhotoTaker: ManagedActivityResultLauncher<Uri, Boolean>,
-    imageUri: MutableState<Uri>
+    imageUri: MutableState<Uri>,
+    countryNames: State<List<CountryInfo>?>,
+    locationViewModel: LocationViewModel,
+    coroutineScope: CoroutineScope
 ) {
     Log.e("ImageUri", imageUri.toString())
-    val takePictureIntent =
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(context.packageManager)?.also {
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri.value)
+    coroutineScope.launch {
+        val takePictureIntent =
+            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+                takePictureIntent.resolveActivity(context.packageManager)?.also {
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri.value)
+                }
             }
+        onePhotoTaker.contract.parseResult(Activity.RESULT_OK, takePictureIntent)
+        images[pageIndex.intValue] = imageUri.value
+        photoTakenSuccess.value = false
+        if (countryNames.value == null) {
+            locationViewModel.fetchCountryNames()
         }
-    onePhotoTaker.contract.parseResult(Activity.RESULT_OK, takePictureIntent)
-    images[pageIndex.intValue] = imageUri.value
-    photoTakenSuccess.value = false
+    }
     Log.e("TakePictureIntent", images.toString())
 }
 fun bitmapToUri(context: Context): Uri {
@@ -235,6 +229,7 @@ fun PhotoSelectorModalSheet(
                     onClick = {
                         showBottomSheet.value = false
                         images[page] = Uri.EMPTY
+                        Log.e("Delete", images.toString())
                     },
                     shape = AbsoluteRoundedCornerShape(8.dp),
                     modifier = Modifier

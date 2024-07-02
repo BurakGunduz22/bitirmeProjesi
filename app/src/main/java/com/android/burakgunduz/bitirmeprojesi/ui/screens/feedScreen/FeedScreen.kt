@@ -1,8 +1,8 @@
 package com.android.burakgunduz.bitirmeprojesi.ui.screens.feedScreen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -14,12 +14,15 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemCard
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemCardSkeleton
@@ -37,31 +40,35 @@ fun FeedScreen(
     auth: FirebaseAuth,
     bottomBarVisible: MutableState<Boolean>
 ) {
-    userInfo.value = userInfo.value ?: auth.currentUser?.uid
+    LaunchedEffect(auth) {
+        userInfo.value = userInfo.value ?: auth.currentUser?.uid
+    }
+
     val isItemsLoaded = remember { mutableStateOf(false) }
     val isItemsImagesLoaded = remember { mutableStateOf(false) }
-    val itemsOnSale = viewModel.itemsOnSale.observeAsState().value
-    val itemShowcaseImage = viewModel.itemShowcaseImages.observeAsState().value
+    val itemsOnSale by viewModel.itemsOnSale.observeAsState(emptyList())
+    val itemShowcaseImages by viewModel.itemShowcaseImages.observeAsState(emptyList())
     val lazyState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
     val showRefreshIndicator = remember { mutableStateOf(false) }
-
     val isRefreshing = remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
-        LaunchedEffect(isItemsLoaded) {
-            viewModel.loadItems { isItemsLoaded.value = it }
-        }
         LaunchedEffect(userInfo.value) {
-            userInfo.value?.let {
-                viewModel.loadLikedItems(it) {
-                    // This will be called once liked items are loaded
+            if (userInfo.value != null) {
+                viewModel.loadItems(refresh = true) {
+                    isItemsLoaded.value = it
+                }
+                viewModel.loadLikedItems(userInfo.value!!) {
+                    isItemsLoaded.value = true
                 }
             }
         }
+
         if (pullToRefreshState.isRefreshing) {
             LaunchedEffect(true) {
                 isRefreshing.value = true
@@ -69,7 +76,7 @@ fun FeedScreen(
                 isItemsLoaded.value = false
                 isItemsImagesLoaded.value = false
                 delay(300)
-                viewModel.loadItems {
+                viewModel.loadItems(refresh = true) {
                     isItemsLoaded.value = it
                     isRefreshing.value = false
                     showRefreshIndicator.value = false
@@ -84,21 +91,20 @@ fun FeedScreen(
             }
         }
 
+        val itemImages = itemShowcaseImages.map { it }
 
-        val itemImages = itemShowcaseImage?.map { it }
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (isItemsLoaded.value) {
-                LaunchedEffect(isItemsImagesLoaded) {
-                    viewModel.loadShowcaseImages(itemsOnSale!!) { isItemsImagesLoaded.value = it }
-                }
-                LazyColumn(state = lazyState, horizontalAlignment = Alignment.CenterHorizontally) {
-                    itemsIndexed(itemsOnSale!!) { _, document ->
+                LazyColumn(
+                    state = lazyState,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                ) {
+                    itemsIndexed(itemsOnSale) { _, document ->
                         val toggleButtonChecked =
                             remember { mutableStateOf(viewModel.isItemLiked(document.itemID)) }
-                        Log.e("FeedScreen", "ItemID: $toggleButtonChecked")
                         val itemImagesEqualled =
-                            itemImages?.find { it.itemID == document.itemID }?.uri
-                        Log.e("FeedScreen", "ItemImages: $itemImagesEqualled")
+                            itemImages.find { it.itemID == document.itemID }?.uri
                         ItemCard(
                             document,
                             itemImagesEqualled.toString(),
@@ -113,11 +119,26 @@ fun FeedScreen(
                                 viewModel.removeLikedItems(userInfo.value!!, document.itemID)
                                 toggleButtonChecked.value = false
                             },
+                            isItemOwn = userInfo.value == document.userID
                         )
                     }
                 }
+
+                LaunchedEffect(lazyState) {
+                    snapshotFlow { lazyState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                        .collect { lastVisibleIndex ->
+                            if (lastVisibleIndex == itemsOnSale.size - 1) {
+                                viewModel.loadItems(startAfter = viewModel.lastVisible) {
+                                    // Additional logic if needed
+                                }
+                            }
+                        }
+                }
             } else {
-                Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     ItemCardSkeleton()
                     ItemCardSkeleton()
                     ItemCardSkeleton()
@@ -126,11 +147,8 @@ fun FeedScreen(
 
             PullToRefreshContainer(
                 state = pullToRefreshState,
-                modifier = Modifier
-                    .align(Alignment.TopCenter),
+                modifier = Modifier.align(Alignment.TopCenter),
             )
-
-
         }
     }
 }

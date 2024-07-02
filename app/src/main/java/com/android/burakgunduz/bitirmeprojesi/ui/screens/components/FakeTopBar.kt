@@ -13,7 +13,9 @@ import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +42,11 @@ fun FakeTopBar(
     isItDirectMessage: Boolean = false,
     userName: String = "",
     userImageUrl: Uri = Uri.EMPTY,
-    sellerID: String = ""
+    sellerID: String = "",
+    isItReport: Boolean = false,
+    isItLogout: Boolean = false,
+    onClick: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     if (isItDirectMessage) {
         Column(Modifier.fillMaxWidth()) {
@@ -125,7 +131,8 @@ fun FakeTopBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = screenName,
@@ -135,7 +142,24 @@ fun FakeTopBar(
                     letterSpacing = (-2).sp,
                     style = MaterialTheme.typography.titleLarge,
                 )
+                if (isItReport) {
+                    IconButton(onClick = { onClick() }) {
+                        Icon(imageVector = Icons.Outlined.Add, contentDescription = "Add Report")
+                    }
+                } else if (isItLogout) {
+                    IconButton(onClick = {
+                        onLogout()
+                    }
+                    )
+                    {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.Logout,
+                            contentDescription = "Logout",
+                        )
+                    }
+                }
             }
+
         }
     }
 }

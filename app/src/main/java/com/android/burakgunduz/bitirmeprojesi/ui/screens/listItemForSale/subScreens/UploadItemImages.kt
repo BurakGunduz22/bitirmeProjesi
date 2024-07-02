@@ -54,7 +54,6 @@ import coil.compose.SubcomposeAsyncImage
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ConfirmExitDialog
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.PhotoSelectorModalSheet
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ProgressBar
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.bitmapToUri
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.photoTaken
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.CountryInfo
@@ -87,14 +86,16 @@ fun UploadItemImages(
         1f to Color.Black
     )
     Log.e("isNextScreen", nextScreen.value.toString())
-    val imageUri =
-        bitmapToUri(
-            context
-        )
+
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
             if (it != null) {
                 tempPhoto.value = it
+                Log.e("pageIndex", pageIndex.intValue.toString())
+            }
+            else {
+                tempPhoto.value = Uri.EMPTY
+                Log.e("pageIndex", pageIndex.intValue.toString())
             }
         }
     val onePhotoTaker =
@@ -103,9 +104,12 @@ fun UploadItemImages(
                 photoTakenSuccess.value = true
                 Log.e("PhotoTaken2", photoTakenSuccess.value.toString())
                 images[pageIndex.intValue] = tempPhoto.value
+                Log.e("pageIndex", pageIndex.intValue.toString())
             } else {
                 photoTakenSuccess.value = false
                 Log.e("PhotoTaken2", photoTakenSuccess.value.toString())
+                images[pageIndex.intValue] = Uri.EMPTY
+                Log.e("pageIndex", pageIndex.intValue.toString())
             }
         }
     LaunchedEffect(nextScreen) {
@@ -129,6 +133,9 @@ fun UploadItemImages(
                 photoTakenSuccess,
                 onePhotoTaker,
                 tempPhoto,
+                countryNames = countryNames,
+                locationViewModel = locationViewModel,
+                coroutineScope = coroutineScope,
             )
         }
     }
@@ -249,7 +256,6 @@ fun UploadItemImages(
             },
             previousScreen = {
                 showDialog.value = true
-                nextScreen.value = false
             },
             currentIcon = Icons.Outlined.CameraAlt,
             nextIcon = Icons.AutoMirrored.Outlined.ArrowForwardIos,

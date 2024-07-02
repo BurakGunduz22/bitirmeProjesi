@@ -1,5 +1,10 @@
 package com.android.burakgunduz.bitirmeprojesi
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -38,6 +43,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -59,14 +66,20 @@ import com.android.burakgunduz.bitirmeprojesi.ui.screens.messagingScreen.subScre
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.searchScreen.SearchScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.sellerProfileScreen.SellerProfileScreen
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.userProfileScreen.UserProfileScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.userProfileScreen.subScreens.EditUserScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.userProfileScreen.subScreens.ReportScreen
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.userProfileScreen.subScreens.UserListedItems
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.AppTheme
 import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.LocationViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
+import com.android.burakgunduz.bitirmeprojesi.viewModels.ReportViewModel
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
 
@@ -82,6 +95,7 @@ class MainActivity : ComponentActivity() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        FirebaseApp.initializeApp(this)
         val storage = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
         val storageRef = storage.reference
         auth = Firebase.auth
@@ -89,6 +103,43 @@ class MainActivity : ComponentActivity() {
         val locationViewModel = LocationViewModel()
         val messageViewModel = MessageViewModel()
         val authViewModel = AuthViewModel()
+        val reportsViewModel = ReportViewModel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1
+                )
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "15"
+            val channel = NotificationChannel(
+                channelId,
+                "Channel human readable title",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("MainActivity", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            // Get new FCM registration token
+            val token = task.result
+            Log.d("MainActivity", "FCM Token: $token")
+            // You can send this token to your server or save it in shared preferences
+        }
 
         setContent {
             var isDarkModeOn by remember { mutableStateOf(true) }
@@ -102,6 +153,7 @@ class MainActivity : ComponentActivity() {
                     locationViewModel,
                     messageViewModel,
                     authViewModel,
+                    reportsViewModel,
                     storageRef
                 )
             }
@@ -128,6 +180,7 @@ fun OpeningScreen(
     locationViewModel: LocationViewModel,
     messageViewModel: MessageViewModel,
     authViewModel: AuthViewModel,
+    reportsViewModel: ReportViewModel,
     storageRef: StorageReference
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -138,6 +191,7 @@ fun OpeningScreen(
     val navController = rememberNavController()
     val startNavigateScreen = remember { mutableStateOf("") }
     val userInfosFar = rememberSaveable { mutableStateOf(auth.currentUser?.uid) }
+    Log.e("UserInfos", "UserInfos: ${userInfosFar.value}")
     if (userInfosFar.value != null) {
         startNavigateScreen.value = "feedScreenNav/${userInfosFar.value}"
     } else if (userInfosFar.value == null) {
@@ -362,7 +416,9 @@ fun OpeningScreen(
                         arguments = listOf(
                             navArgument("receiverID") { type = NavType.StringType },
                             navArgument("itemID") { type = NavType.StringType },
-                            navArgument("conversationUserID") { type = NavType.StringType }
+                            navArgument("conversationUserID") { type = NavType.StringType },
+                            navArgument("messagerName") { type = NavType.StringType },
+                            navArgument("itemName") { type = NavType.StringType }
                         ),
                         enterTransition = {
 
@@ -488,7 +544,8 @@ fun OpeningScreen(
                             itemViewModel,
                             storageRef,
                             isDarkModeOn,
-                            navController
+                            navController,
+                            userInfosFar.value!!
                         )
                     }
                     composable("favoriteScreenNav",
@@ -574,8 +631,9 @@ fun OpeningScreen(
                             isDarkModeOn,
                             navController,
                             auth,
-                            userInfosFar
-                        )
+                            userInfosFar,
+
+                            )
                     }
                     composable("editItemScreenNav/{itemId}", arguments = listOf(
                         navArgument("itemId") { type = NavType.StringType }
@@ -616,7 +674,8 @@ fun OpeningScreen(
                             itemViewModel,
                             navController,
                             navBack,
-                            userInfosFar.value
+                            userInfosFar.value,
+                            locationViewModel
                         )
                     }
                     composable("searchScreen",
@@ -653,6 +712,112 @@ fun OpeningScreen(
 
                         }) {
                         SearchScreen(itemViewModel, navController, isDarkModeOn, userInfosFar, auth)
+                    }
+                    composable("userListedItems/{sellerID}&{userInfosFar}",
+                        arguments = listOf(
+                            navArgument("sellerID") { type = NavType.StringType },
+                            navArgument("userInfosFar") { type = NavType.StringType },
+                        ),
+                        enterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+                        }
+                    ) { navBack ->
+                        UserListedItems(
+                            itemViewModel = itemViewModel,
+                            storageRef = storageRef,
+                            isDarkModeOn = isDarkModeOn,
+                            navController = navController,
+                            backStackEntry = navBack
+                        )
+                    }
+                    composable("reportScreen", enterTransition = {
+
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(700)
+                        )
+                    },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+                        }) {
+                        ReportScreen(reportsViewModel, userInfosFar.value ?: "", navController)
+                    }
+                    composable(route = "editUserPage", enterTransition = {
+
+                        slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(700)
+                        )
+                    },
+                        exitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = tween(700)
+                            )
+
+                        },
+                        popEnterTransition = {
+                            slideIntoContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+                        },
+                        popExitTransition = {
+
+                            slideOutOfContainer(
+                                AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = tween(700)
+                            )
+                        }) {
+                        EditUserScreen(viewModel = authViewModel, userID = auth.currentUser?.uid!!, navController = navController)
                     }
                 }
             }

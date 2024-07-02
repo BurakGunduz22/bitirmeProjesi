@@ -44,7 +44,7 @@ fun TopBarNavigationBar(
             title = {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "FeedScreen",
+                        text = "Feed",
                         fontFamily = archivoFonts,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = (-2).sp,

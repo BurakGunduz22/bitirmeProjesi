@@ -122,7 +122,6 @@ fun ExposedDropdownMenu(
                     modifier = Modifier.size(280.dp, 50.dp)
                 )
             }
-
         }
     }
 }

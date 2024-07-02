@@ -19,11 +19,25 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        proguardFiles()
+    }
+    signingConfigs {
+        create("release") {
+            storeFile = file("C:/Users/burak/Desktop/New folder/proje/proje.jks")
+            storePassword = "28081991a"
+            keyAlias = "key0"
+            keyPassword = "28081991a"
+        }
     }
 
     buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -72,6 +86,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
     implementation(libs.maps.compose)
+    implementation (libs.firebase.messaging.ktx)
+    implementation (libs.firebase.analytics)
     implementation (libs.googleid)
     implementation (libs.play.services.maps)
     implementation (libs.play.services.location)

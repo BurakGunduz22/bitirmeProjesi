@@ -24,9 +24,9 @@ fun SnackBarFile(
             SnackbarDuration.Long
         else-> SnackbarDuration.Indefinite
     }
-        coroutineScope.launch {
-            snackbarHostState.showSnackbar(message = message, duration = snackbarDuration)
-        }
+    coroutineScope.launch {
+        snackbarHostState.showSnackbar(message = message, duration = snackbarDuration)
+    }
 }
 
 @Composable

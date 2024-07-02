@@ -1,5 +1,8 @@
 package com.android.burakgunduz.bitirmeprojesi.viewModels
 
+import android.os.Parcel
+import android.os.Parcelable
+import androidx.annotation.Keep
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.Dispatchers
@@ -10,20 +13,44 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class CountryInfo(
-    val name: String,
-    val countryCode: String
-)
+data class CountryInfo(val name: String, val countryCode: String) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: ""
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(name)
+        parcel.writeString(countryCode)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<CountryInfo> {
+        override fun createFromParcel(parcel: Parcel): CountryInfo {
+            return CountryInfo(parcel)
+        }
+
+        override fun newArray(size: Int): Array<CountryInfo?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 
 data class CityInfo(
     val name: String,
     val cityCode: String
 )
+
+
 data class StreetInfo(
     val name: String,
     val streetCode: String
 )
 
+@Keep
 data class TownInfo(
     val name: String,
     val districtCode: String

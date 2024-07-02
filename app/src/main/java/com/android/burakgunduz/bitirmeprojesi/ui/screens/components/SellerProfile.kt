@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components
+package com.android.burakgunduz.bitirmeprojesi.ui.screens.components
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

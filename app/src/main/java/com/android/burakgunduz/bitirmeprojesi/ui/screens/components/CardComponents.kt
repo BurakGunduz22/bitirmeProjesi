@@ -135,28 +135,27 @@ fun PriceCard(priceValue: String, isDarkModeOn: Boolean) {
 
     Box(
         modifier = Modifier
-            .size(80.dp, 50.dp)
+            .size(120.dp, 50.dp)
             .padding(bottom = 5.dp, end = 5.dp)
-            ,
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
                 text = priceValue,
-                fontSize = 19.sp,
+                fontSize = 21.sp,
                 fontFamily = archivoFonts,
                 fontWeight = FontWeight.ExtraBold,
                 color = itemTitleTextColorChanger(isDarkModeOn = isDarkModeOn),
-                modifier = Modifier.width(50.dp),
+                modifier = Modifier.width(60.dp),
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
             )
             Text(
                 text = " €",
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 fontFamily = robotoFonts,
                 fontWeight = FontWeight.ExtraBold,
                 color = itemTitleTextColorChanger(isDarkModeOn = isDarkModeOn),

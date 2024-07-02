@@ -23,12 +23,12 @@ data class Message(
 class MessageViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val fireStorageDB = Firebase.storage("gs://bitirmeproje-ad56d.appspot.com")
-    val directMessages: MutableLiveData<List<Message>> = MutableLiveData()
     val messageList: MutableLiveData<List<Message>> by lazy {
         MutableLiveData<List<Message>>().also {
             getAllMessages("userID")
         }
     }
+    val directMessages: MutableLiveData<List<Message>> = MutableLiveData()
 
     fun sendFirstMessage(
         userID: String,
@@ -49,7 +49,28 @@ class MessageViewModel : ViewModel() {
                 db.collection("messages")
                     .document(it.id)
                     .collection("messageContext")
-                    .add(sendingMessage)
+                    .add(sendingMessage).addOnSuccessListener {
+                        val itemRef = db.collection("itemsOnSale").document(itemID)
+                        itemRef.get().addOnSuccessListener { document ->
+                            Log.e("First Message", "Document: $document")
+                            if (document.exists()) {
+                                val currentCount = document.getLong("messageCounter") ?: 0L
+                                itemRef.update("messageCounter", currentCount + 1)
+                                    .addOnSuccessListener {
+                                        Log.d(
+                                            "First Message",
+                                            "Message counter incremented successfully."
+                                        )
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("First Message", "Error incrementing message counter.", e)
+                                    }
+                            }
+                            else {
+                                Log.e("First Message", "Document does not exist.")}
+                        }
+                    }
+
             }
     }
 
@@ -71,43 +92,85 @@ class MessageViewModel : ViewModel() {
             .whereIn("senderID", listOf(userID, conversationUserID))
             .whereIn("receiverID", listOf(userID, conversationUserID))
             .get()
-            .addOnSuccessListener {
-                db.collection("messages")
-                    .document(it.documents[0].id)
-                    .collection("messageContext")
-                    .add(sendingMessage)
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.documents.isNotEmpty()) {
+                    db.collection("messages")
+                        .document(snapshot.documents[0].id)
+                        .collection("messageContext")
+                        .add(sendingMessage)
+                    // Increment the messageCounter in itemsOnSale collection
+                    val itemRef = db.collection("itemsOnSale").document(itemID)
+                    itemRef.get().addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            val currentCount = document.getLong("messageCounter") ?: 0L
+                            itemRef.update("messageCounter", currentCount + 1)
+                                .addOnSuccessListener {
+                                    Log.d(
+                                        "First Message",
+                                        "Message counter incremented successfully."
+                                    )
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("First Message", "Error incrementing message counter.", e)
+                                }
+                        }
+                    }
+                } else {
+                    db.collection("messages")
+                        .add(sendingMessage).addOnSuccessListener {
+                            db.collection("messages")
+                                .document(it.id)
+                                .collection("messageContext")
+                                .add(sendingMessage)
+                            Log.e("First Message", "Messages: $it")
+                        }
+                }
             }
     }
 
-    fun getDirectMessages(userID: String, itemID: String, receiverID: String) {
-        directMessages.value = emptyList()
+
+    fun getDirectMessages(userID: String, itemID: String, receiverID: String,messagesLoaded:(Boolean)->Unit) {
         Log.d("MesajlarGeldi", "Messages: $userID, $itemID, $receiverID")
+
         db.collection("messages")
             .whereEqualTo("itemID", itemID)
             .whereIn("senderID", listOf(userID, receiverID))
             .whereIn("receiverID", listOf(userID, receiverID))
             .get()
             .addOnSuccessListener { result ->
-                if (result.documents.isNotEmpty()) {
-                    Log.e("MesajGeldi", "Messages: ${result.documents[0].id}")
-                    db.collection("messages").document(result.documents[0].id)
+                if (result != null && result.documents.isNotEmpty()) {
+                    val messageDocId = result.documents[0].id
+                    db.collection("messages").document(messageDocId)
                         .collection("messageContext")
-                        .get()
-                        .addOnSuccessListener { documents ->
-                            val items = documents.mapNotNull { document ->
-                                document.toObject(Message::class.java)
+                        .orderBy("timestamp", Query.Direction.ASCENDING)
+                        .addSnapshotListener { documents, error ->
+                            if (error != null) {
+                                Log.w(TAG, "Listen failed.", error)
+                                return@addSnapshotListener
                             }
-                            directMessages.value = items
-                            Log.d("MesajGeldi", "Messages: $items")
+
+                            if (documents != null) {
+                                val items = documents.mapNotNull { document ->
+                                    document.toObject(Message::class.java)
+                                }
+                                directMessages.value = items
+                                messagesLoaded(false)
+                                Log.d("MesajGeldi", "Messages: $items")
+                            } else {
+                                Log.d("MesajGelmedi", "No documents found in messageContext.")
+                            }
                         }
                 } else {
-                    Log.d("MesajGelmedi", "No documents found.")
+                    // Handle the case where no conversation document exists
+                    Log.d("MesajGelmedi", "No conversation document found.")
+                    directMessages.value = emptyList() // Clear any existing messages
                 }
             }
-            .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents.", exception)
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error getting documents: ", e)
             }
     }
+
 
     fun getAllMessages(userID: String) {
         db.collection("messages")
@@ -143,6 +206,7 @@ class MessageViewModel : ViewModel() {
                 Log.w(TAG, "Error getting documents: ", exception)
             }
     }
+
     private fun uploadPhoto(uri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = fireStorageDB.reference.child("message_photos/${uri.lastPathSegment}")
         val uploadTask = storageRef.putFile(uri)
@@ -157,6 +221,7 @@ class MessageViewModel : ViewModel() {
             onFailure(exception)
         }
     }
+
     fun sendPhotoMessage(
         userID: String,
         conversationUserID: String,

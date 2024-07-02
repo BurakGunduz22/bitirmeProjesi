@@ -26,13 +26,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ImagePager
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemConditions
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemDescription
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemLocationMap
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemName
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemPrice
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.SellerProfile
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ImagePager
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemConditions
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemDescription
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemLocationMap
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemName
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemPrice
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.SellerProfile
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
 import kotlinx.coroutines.delay
@@ -111,7 +111,7 @@ fun PreviewScreen(
                             Log.e("toggleButton", "ItemDetails: ${toggleButtonChecked.value}")
                             if (isMapLoaded.value) {
                                 item {
-                                    ItemName(itemName = itemDetailsViewModel.itemName)
+                                    ItemName(itemName = itemDetailsViewModel.itemName,itemDetailsViewModel.itemCondition)
                                 }
                                 item {
                                     if (sellerName?.value != null) {

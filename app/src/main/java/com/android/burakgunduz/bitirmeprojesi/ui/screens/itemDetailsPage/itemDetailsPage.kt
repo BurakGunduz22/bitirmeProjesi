@@ -34,21 +34,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ImagePager
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemCategory
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemCategorySkeleton
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemConditionSkeleton
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemDescription
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemDescriptionSkeleton
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemLocationMap
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemLocationMapSkeleton
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemName
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemNameSkeleton
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemPrice
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.SellerProfile
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.SendMessageToSellerButton
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.SkeletonLoader
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ImagePager
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemCategory
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemConditions
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemDescription
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemLocationMap
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemName
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.ItemPrice
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.SellerProfile
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components.SendMessageToSellerButton
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.android.burakgunduz.bitirmeprojesi.viewModels.MessageViewModel
 import kotlinx.coroutines.delay
@@ -116,9 +115,11 @@ fun ItemDetailsPage(
                         isTouched
                     )
                 } else {
-                    SkeletonLoader(modifier = Modifier
-                        .height(200.dp)
-                        .fillMaxWidth())
+                    SkeletonLoader(
+                        modifier = Modifier
+                            .height(200.dp)
+                            .fillMaxWidth()
+                    )
                 }
                 if (!isTouched.value) {
                     IconButton(
@@ -147,7 +148,27 @@ fun ItemDetailsPage(
                     ) {
                         Log.e("toggleButton", "ItemDetails: ${toggleButtonChecked.value}")
                         if (itemDetailsViewModel != null) {
-                            item { ItemName(itemName = itemDetailsViewModel.itemName) }
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        ItemName(
+                                            itemName = itemDetailsViewModel.itemName,
+                                            itemCondition = itemDetailsViewModel.itemCondition
+                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.End
+                                        ) {
+                                            ItemPrice(itemPrice = itemDetailsViewModel.itemPrice)
+                                        }
+                                    }
+                                }
+                            }
                             item {
                                 Row(
                                     modifier = Modifier
@@ -160,7 +181,15 @@ fun ItemDetailsPage(
                                         itemCategory = itemDetailsViewModel.itemCategory,
                                         itemSubCategory = itemDetailsViewModel.itemSubCategory
                                     )
-                                    ItemPrice(itemPrice = itemDetailsViewModel.itemPrice)
+                                    if (sellerName?.value != null) {
+                                        Log.e("SellerName", "SellerName: $sellerName")
+                                        SellerProfile(
+                                            sellerProfileName = sellerName.value.name,
+                                            sellerID = itemDetailsViewModel.userID,
+                                            navController = navController,
+                                            itemViewModel = viewModel
+                                        )
+                                    }
                                 }
                             }
                             item {
@@ -173,17 +202,12 @@ fun ItemDetailsPage(
                                 Spacer(modifier = Modifier.height(8.dp)) // Add space below the divider
                             }
                             item {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    ItemConditions(itemCondition = itemDetailsViewModel.itemCondition)
-                                    if (sellerName?.value != null) {
-                                        Log.e("SellerName", "SellerName: $sellerName")
-                                        SellerProfile(
-                                            sellerProfileName = sellerName.value.name,
-                                            sellerID = itemDetailsViewModel.userID,
-                                            navController = navController,
-                                            itemViewModel = viewModel
-                                        )
-                                    }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+
                                 }
                             }
                             item { ItemDescription(itemDesc = itemDetailsViewModel.itemDesc) }
@@ -237,6 +261,7 @@ fun ItemDetailsPage(
                             },
                             sellerName?.value?.name ?: "",
                             itemName = itemDetailsViewModel?.itemName ?: "",
+                            isOwnItem = currentUserID == itemDetailsViewModel?.userID
                         )
                     }
                 }

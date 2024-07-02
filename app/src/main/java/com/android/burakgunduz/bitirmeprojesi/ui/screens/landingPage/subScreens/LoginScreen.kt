@@ -36,11 +36,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.GoogleAuthButton
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.MainButtonForAuth
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.SnackBarFile
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.TextFieldForAuth
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.authKeyboardType
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.GoogleAuthButton
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.AuthViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -201,20 +201,21 @@ fun login(
         authViewModel.getAuth(
             mailInputString,
             passwordInputString,
-        ) { isCompleted, userID ->
+        ) { isCompleted, userID,message ->
             if (!isCompleted) {
                 Log.e("LoginScreen", "Login button clicked")
                 navController.navigate("feedScreenNav/{$userID}") {
-                    popUpTo("loginScreenNav") {
-                        inclusive = true
+                    popUpTo("feedScreenNav/{$userID}") {
+                        inclusive = false
                     }
                     launchSingleTop = true
+
                 }
             } else {
                 SnackBarFile(
                     coroutineScope,
                     snackbarHostState,
-                    "Invalid user info",
+                    message,
                     "Short"
                 )
                 Log.e("LoginScreen", "Invalid user info")

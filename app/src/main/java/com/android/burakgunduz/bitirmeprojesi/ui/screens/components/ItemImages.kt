@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components
+package com.android.burakgunduz.bitirmeprojesi.ui.screens.components
 
 import android.util.Log
 import androidx.activity.OnBackPressedCallback

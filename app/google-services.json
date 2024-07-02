@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "129861234415",
+    "firebase_url": "https://bitirmeproje-ad56d-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "bitirmeproje-ad56d",
     "storage_bucket": "bitirmeproje-ad56d.appspot.com"
   },
@@ -19,6 +20,14 @@
           "android_info": {
             "package_name": "com.android.burakgunduz.bitirmeprojesi",
             "certificate_hash": "c28a7e386385de85d422b33e599b947922199de7"
+          }
+        },
+        {
+          "client_id": "129861234415-di6on580d2mamv20deqs6e3786c38e77.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.android.burakgunduz.bitirmeprojesi",
+            "certificate_hash": "e4b9fce1292f5c51b3beb08bc5c1c9553f86e8f0"
           }
         },
         {

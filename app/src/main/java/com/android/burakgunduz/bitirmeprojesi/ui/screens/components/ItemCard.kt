@@ -1,5 +1,6 @@
 package com.android.burakgunduz.bitirmeprojesi.ui.screens.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,11 +30,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemCard
 import kotlinx.coroutines.delay
 
@@ -85,9 +89,10 @@ fun ItemCard(
     toggleButtonChecked: MutableState<Boolean>,
     likeItem: () -> Unit,
     unLikeItem: () -> Unit,
+    isItemOwn: Boolean,
 ) {
     val isContentLoaded = remember { mutableStateOf(false) }
-
+    Log.e("ItemCard", "ItemCard: ${isItemOwn}")
     LaunchedEffect(Unit) {
         delay(300) // Simulate loading delay
         isContentLoaded.value = true
@@ -110,7 +115,12 @@ fun ItemCard(
             Box(modifier = Modifier.fillMaxSize()) {
                 if (imageUrl.isNotEmpty()) {
                     SubcomposeAsyncImage(
-                        model = imageUrl,
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .crossfade(true)
+                            .diskCachePolicy(CachePolicy.ENABLED) // Enables disk caching
+                            .memoryCachePolicy(CachePolicy.ENABLED) // Enables memory caching
+                            .build(),
                         contentDescription = "Item Image",
                         contentScale = ContentScale.FillWidth,
                         alignment = Alignment.Center,
@@ -177,7 +187,9 @@ fun ItemCard(
                         verticalArrangement = Arrangement.Top,
                         modifier = Modifier.fillMaxWidth() // This will not take up any additional space
                     ) {
-                        ItemLikeButton(isDarkModeOn, toggleButtonChecked, likeItem, unLikeItem)
+                        if (!isItemOwn) {
+                            ItemLikeButton(isDarkModeOn, toggleButtonChecked, likeItem, unLikeItem)
+                        }
                     }
                 } else {
                     ItemCardSkeleton()

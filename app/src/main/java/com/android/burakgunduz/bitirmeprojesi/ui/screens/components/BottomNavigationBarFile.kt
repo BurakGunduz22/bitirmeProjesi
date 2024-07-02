@@ -118,7 +118,14 @@ fun BottomNavigationBar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.navigate("feedScreenNav/${auth.currentUser?.uid}") }) {
+                IconButton(
+                    onClick = {
+                        if (pageDestination.value != "feedScreenNav/{userId}") {
+                            navController.navigate("feedScreenNav/${auth.currentUser?.uid}")
+                        }
+                    },
+                    enabled = pageDestination.value != "feedScreenNav/{userId}"
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Home,
                         contentDescription = "Feed",
@@ -126,11 +133,15 @@ fun BottomNavigationBar(
                         tint = getIconColor("feedScreenNav/{userId}")
                     )
                 }
-                IconButton(onClick = {
-                    navController.navigate("searchScreen")
-                    Log.e("UserLogOut", "User is logged out:${userInfosFar.value}")
-                })
-                {
+                IconButton(
+                    onClick = {
+                        if (pageDestination.value != "searchScreen") {
+                            navController.navigate("searchScreen")
+                            Log.e("UserLogOut", "User is logged out:${userInfosFar.value}")
+                        }
+                    },
+                    enabled = pageDestination.value != "searchScreen"
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Search,
                         contentDescription = "Search",
@@ -144,7 +155,11 @@ fun BottomNavigationBar(
                         .size(55.dp)
                         .clip(CircleShape)
                         .background(getBackColor("listItemScreenNav"))
-                        .clickable { navController.navigate("listItemScreenNav") },
+                        .clickable {
+                            if (pageDestination.value != "listItemScreenNav") {
+                                navController.navigate("listItemScreenNav")
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -154,10 +169,15 @@ fun BottomNavigationBar(
                         tint = getCameraColor("listItemScreenNav")
                     )
                 }
-                IconButton(onClick = {
-                    navController.navigate("favoriteScreenNav")
-                    Log.e("favoriteScreenNav", "${userInfosFar.value}")
-                }) {
+                IconButton(
+                    onClick = {
+                        if (pageDestination.value != "favoriteScreenNav") {
+                            navController.navigate("favoriteScreenNav")
+                            Log.e("favoriteScreenNav", "${userInfosFar.value}")
+                        }
+                    },
+                    enabled = pageDestination.value != "favoriteScreenNav"
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.FavoriteBorder,
                         contentDescription = "Profile",
@@ -165,10 +185,15 @@ fun BottomNavigationBar(
                         tint = getIconColor("favoriteScreenNav")
                     )
                 }
-                IconButton(onClick = {
-                    navController.navigate("userProfileScreen/${auth.currentUser?.uid}")
-                    Log.e("SellerProfile", "${userInfosFar.value}")
-                }) {
+                IconButton(
+                    onClick = {
+                        if (pageDestination.value != "userProfileScreen/${auth.currentUser?.uid}") {
+                            navController.navigate("userProfileScreen/${auth.currentUser?.uid}")
+                            Log.e("SellerProfile", "${userInfosFar.value}")
+                        }
+                    },
+                    enabled = pageDestination.value != "userProfileScreen/{sellerProfileID}"
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Person2,
                         contentDescription = "Profile",

@@ -6,7 +6,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
 import android.util.Log
@@ -14,13 +13,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBackIos
@@ -28,13 +25,11 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.outlined.NotListedLocation
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,8 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.R
-import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ExposedDropdownMenu
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ProgressBar
 import com.android.burakgunduz.bitirmeprojesi.ui.theme.fonts.archivoFonts
 import com.android.burakgunduz.bitirmeprojesi.viewModels.CountryInfo
@@ -61,6 +56,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.SettingsClient
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -74,7 +70,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -91,71 +86,68 @@ fun ListItemLocation(
     screenNumber: MutableState<Int>,
     itemLocation: MutableList<String>,
     nextScreen: MutableState<Boolean>,
-    isDarkModeOn: Boolean
+    isDarkModeOn: Boolean,
+    navController: NavController
 ) {
-    val country = remember { mutableStateOf(itemLocation.getOrNull(0) ?: "") }
-    val city = remember { mutableStateOf(itemLocation.getOrNull(1) ?: "") }
-    val town = remember { mutableStateOf(itemLocation.getOrNull(2) ?: "") }
-    val district = remember { mutableStateOf(itemLocation.getOrNull(3) ?: "") }
-    val street = remember { mutableStateOf(itemLocation.getOrNull(4) ?: "") }
-    val location = remember { mutableStateOf("") }
-    val cityNames =
-        locationViewModel.cityNames.observeAsState().value?.toMutableList() ?: mutableListOf()
-    val townNames = locationViewModel.townNames.observeAsState().value ?: listOf()
-    val countryList = countryNames.value?.map { it } ?: listOf()
     val localContext = LocalContext.current
     BackHandler {
         coroutineScope.launch {
             screenNumber.value = 1
-            itemLocation.clear()
-            itemLocation.addAll(
-                listOf(
-                    country.value,
-                    city.value,
-                    town.value,
-                    district.value,
-                    street.value
-                )
-            )
+            nextScreen.value = false
         }
     }
-    val latLng = remember { mutableStateOf(LatLng(39.925533, 32.866287)) }
 
+    val latLng = remember { mutableStateOf<LatLng?>(null) }
+    val isMet = remember { mutableStateOf(false) }
+    val cameraPositionState: CameraPositionState = rememberCameraPositionState {
+        latLng.value?.let {
+            position = CameraPosition.builder()
+                .target(it)
+                .zoom(17f)
+                .build()
+        } ?: run {
+            position = CameraPosition.builder()
+                .target(LatLng(39.925533, 32.866287))  // Default position
+                .zoom(17f)
+                .build()
+        }
+    }
+
+    // Fetch location on initialization
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            fetchLocation(localContext) {
-                location.value = it
-                val geocoder = Geocoder(localContext)
-                val address = geocoder.getFromLocationName(location.value, 1)
-                if (address != null && address.size > 0) {
-                    val location = address[0]
-                    latLng.value = LatLng(location.latitude, location.longitude)
-                }
-                Log.e("Location", location.value)
-                val locationParts = location.value.split(",")
-                Log.e("Location", locationParts.toString())
-                val cityParts = locationParts[2].split(" ")
-                Log.e("Location", cityParts.toString())
-                val townParts= cityParts[3].split("/")
-                Log.e("Location", townParts.toString())
-                val streetParts = locationParts[1].split("Sk.")
-                Log.e("Location", streetParts.toString())
-                    street.value = streetParts[0].trim()
-                    district.value = locationParts[0].trim()
-                    town.value = townParts[0].trim()
-                    city.value = cityParts[2].trim()
-                    country.value = locationParts[3].trim()
+            fetchLocation(localContext) { location ->
+                latLng.value = location
+                isMet.value = true
+                // Update the camera position to the new location
+                cameraPositionState.position = CameraPosition.builder()
+                    .target(location)
+                    .zoom(17f)
+                    .build()
             }
         }
     }
-    val countryValue = country.value
-    val cityValue = city.value
-    val townValue = town.value
+
+    // Manage the visibility of the next screen after a delay
     LaunchedEffect(nextScreen) {
         delay(500)
         nextScreen.value = true
     }
+
     Log.e("LogDetails", itemDetails.toString())
+
+    // Update the camera position when latLng.value changes
+    LaunchedEffect(latLng.value) {
+        latLng.value?.let {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(it, 17f),
+                1000 // Duration of the animation in milliseconds
+            )
+        }
+    }
+
+    val style = MapStyleOptions.loadRawResourceStyle(localContext, R.raw.dark_mode)
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -177,173 +169,68 @@ fun ListItemLocation(
                     letterSpacing = (-1).sp,
                     fontSize = 30.sp,
                 )
-                val cameraPositionState: CameraPositionState = rememberCameraPositionState {
-                    position = CameraPosition.builder()
-                        .target(latLng.value)
-                        .zoom(17f)
-                        .build()
-                }
-                val style = MapStyleOptions.loadRawResourceStyle(localContext, R.raw.dark_mode)
                 GoogleMap(
                     modifier = Modifier
                         .size(360.dp, 280.dp)
                         .clip(AbsoluteRoundedCornerShape(10.dp)),
                     cameraPositionState = cameraPositionState,
                     properties = if (isDarkModeOn) MapProperties(mapStyleOptions = style) else MapProperties()
-
                 ) {
-                    Circle(
-                        center = latLng.value, // Set your circle center
-                        radius = (150.0),  // Set your circle radius
-                        fillColor = (Color(0x220000FF)),
-                        strokeColor = (Color(0x220000FF)),
-                        strokeWidth = (10f)
-                    )
-                }
-                Column(
-                    modifier = Modifier.fillMaxHeight(0.8f),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-
-                    ExposedDropdownMenu(
-                        updatedData = country,
-                        items = countryList,
-                        isLocationFilled = !countryList.isNullOrEmpty(),
-                        nameOfDropBox = "Country",
-                        locationString = countryValue
-                    )
-                    LaunchedEffect(country.value) {
-                        coroutineScope.launch {
-                            countryNames.value?.let {
-                                locationViewModel.fetchCitiesOfCountry(
-                                    country.value, it
-                                )
-                            }
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ExposedDropdownMenu(
-                            updatedData = city,
-                            items = cityNames,
-                            isLocationFilled = true,
-                            nameOfDropBox = "City",
-                            modifier = Modifier.width(150.dp),
-                            locationString = cityValue
-                        )
-                        LaunchedEffect(city.value) {
-                            coroutineScope.launch {
-                                cityNames.let {
-                                    locationViewModel.fetchTownOfCity(
-                                        town.value, it
-                                    )
-                                }
-                            }
-                        }
-                        ExposedDropdownMenu(
-                            updatedData = town,
-                            items = townNames,
-                            isLocationFilled = true,
-                            nameOfDropBox = "Town",
-                            locationString = townValue,
-                            modifier = Modifier.width(150.dp)
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(0.9f),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = district.value,
-                            onValueChange = { district.value = it },
-                            shape = AbsoluteRoundedCornerShape(16),
-                            label = { Text("District") },
-                            modifier = Modifier.width(150.dp),
-                            maxLines = 1
-                        )
-                        OutlinedTextField(
-                            value = street.value,
-                            onValueChange = {
-                                street.value = it
-                            },
-                            shape = AbsoluteRoundedCornerShape(16),
-                            label = { Text("Street") },
-                            modifier = Modifier.width(150.dp),
-                            maxLines = 1
+                    latLng.value?.let {
+                        Circle(
+                            center = it, // Set your circle center
+                            radius = (150.0),  // Set your circle radius
+                            fillColor = (Color(0x220000FF)),
+                            strokeColor = (Color(0x220000FF)),
+                            strokeWidth = (10f)
                         )
                     }
                 }
+                LocationButton(latLng, isMet)
             }
         }
-        val isMet =
-            country.value.isNotEmpty() && city.value.isNotEmpty() && town.value.isNotEmpty() && district.value.isNotEmpty() && street.value.isNotEmpty()
+
         ProgressBar(
-            isProgressRequirementsMet = isMet,
+            isProgressRequirementsMet = isMet.value,
             currentIcon = Icons.AutoMirrored.Outlined.NotListedLocation,
             nextIcon = Icons.AutoMirrored.Outlined.ArrowForwardIos,
             previousIcon = Icons.AutoMirrored.Outlined.ArrowBackIos,
             nextScreen = {
-                itemDetails.addAll(
-                    listOf(
-                        country.value,
-                        city.value,
-                        town.value,
-                        district.value,
-                        street.value
-                    )
-                )
-                itemDetails.forEach {
-                    Log.d("ItemDetails", it)
+                latLng.value?.let {
+                    itemDetails.add(it.latitude.toString())
+                    itemDetails.add(it.longitude.toString())
                 }
                 viewModel.saveItem(images, itemDetails, userID)
+                navController.navigate("feedScreenNav/${userID}")
             },
             previousScreen = {
                 screenNumber.value = 1
-                itemLocation.clear()
-                itemLocation.addAll(
-                    listOf(
-                        country.value,
-                        city.value,
-                        town.value,
-                        district.value,
-                        street.value
-                    )
-                )
                 nextScreen.value = false
-            })
+            }
+        )
     }
 }
 
-
 @Composable
-fun LocationButton(locationData: MutableState<String>) {
-    var localContext = LocalContext.current
-
+fun LocationButton(
+    locationData: MutableState<LatLng?>,
+    isMet: MutableState<Boolean>
+) {
+    val localContext = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
-        Text(
-            text = "Location Data: ${locationData.value.split(",")}",
-            modifier = Modifier.padding(top = 25.dp)
-        )
-
         Button(
             onClick = {
                 coroutineScope.launch {
-                    fetchLocation(localContext) {
-                        locationData.value = it
-                        Log.e("Location", locationData.value)
-
+                    fetchLocation(localContext) { location ->
+                        locationData.value = location
+                        isMet.value = true
                     }
                 }
-
             },
+            enabled = !isMet.value // Disable the button if location is already fetched
         ) {
             Text("Get Location")
         }
@@ -351,7 +238,7 @@ fun LocationButton(locationData: MutableState<String>) {
 }
 
 @SuppressLint("MissingPermission")
-private suspend fun fetchLocation(localContext: Context, callback: (String) -> Unit): String {
+private suspend fun fetchLocation(localContext: Context, callback: (LatLng) -> Unit): String {
     return suspendCancellableCoroutine { continuation ->
         val fusedLocationClient: FusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(localContext)
@@ -384,22 +271,7 @@ private suspend fun fetchLocation(localContext: Context, callback: (String) -> U
             // Location permission granted, fetch last known location
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                 if (location != null) {
-                    val geocoder = Geocoder(localContext)
-                    try {
-                        val addresses =
-                            geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                        if (addresses != null) {
-                            if (addresses.isNotEmpty()) {
-                                continuation.resume(addresses[0].getAddressLine(0))
-                                callback(addresses[0].getAddressLine(0).toString())
-                            } else {
-                                continuation.resume("Location: Unknown")
-                            }
-                        }
-                    } catch (e: IOException) {
-                        continuation.resumeWithException(e)
-                        Log.e("Location", "Error: $e")
-                    }
+                    callback(LatLng(location.latitude, location.longitude))
                 } else {
                     continuation.resume("Location: Unknown")
                 }
@@ -428,4 +300,6 @@ private suspend fun fetchLocation(localContext: Context, callback: (String) -> U
         }
     }
 }
+
+
 

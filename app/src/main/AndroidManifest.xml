@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools" >
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"  />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -15,36 +17,55 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BitirmeProjesi">
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.BitirmeProjesi" >
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true" >
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.BitirmeProjesi">
+            android:theme="@style/Theme.BitirmeProjesi" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.appcheck.SAFETY_NET_PROVIDER"
+            android:value="true" />
+        <meta-data
+            android:name="com.google.firebase.appcheck.PlayIntegrityAppCheckProviderFactory"
+            android:value="true" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBpvtg70YCZfZpzrEcH2k6kcAJbFNm4dFs" />
+            android:value="AIzaSyCEsp4IZKMQdfbe_ZBnPb-xF7zuoWeXWUg" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/saflogo" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/common_google_signin_btn_text_dark" />
     </application>
 
 </manifest>

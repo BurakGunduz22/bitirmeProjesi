@@ -1,4 +1,4 @@
-package com.android.burakgunduz.bitirmeprojesi.ui.screens.itemDetailsPage.components
+package com.android.burakgunduz.bitirmeprojesi.ui.screens.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +25,7 @@ fun ItemConditions(itemCondition: Int) {
             fontFamily = archivoFonts,
             fontWeight = FontWeight.SemiBold,
             color = Color.Green,
-            modifier = Modifier.padding(10.dp)
+            modifier = Modifier.padding(top = 35.dp, start = 5.dp)
         )
 
         1 -> Text(
@@ -34,7 +34,7 @@ fun ItemConditions(itemCondition: Int) {
             fontFamily = archivoFonts,
             fontWeight = FontWeight.SemiBold,
             color = Color.Yellow,
-            modifier = Modifier.padding(10.dp)
+            modifier = Modifier.padding(top = 35.dp, start = 5.dp)
         )
 
         2 -> Text(
@@ -43,12 +43,16 @@ fun ItemConditions(itemCondition: Int) {
             fontFamily = archivoFonts,
             fontWeight = FontWeight.SemiBold,
             color = Color.Yellow,
-            modifier = Modifier.padding(10.dp)
+            modifier = Modifier.padding(top = 35.dp, start = 5.dp)
         )
 
         else -> Text(
-            "Unknown", style = MaterialTheme.typography.bodyMedium, fontFamily = archivoFonts,
+            "Unknown",
+            style = MaterialTheme.typography.bodyMedium,
+            fontFamily = archivoFonts,
             fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 35.dp, start = 5.dp)
+
         )
     }
 }
@@ -87,8 +91,7 @@ fun ItemDescription(itemDesc: String) {
 @Composable
 fun ItemPrice(itemPrice: Int) {
     Row(
-        modifier = Modifier
-            .padding(10.dp, end = 25.dp),
+        modifier = Modifier.padding(top = 30.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -99,8 +102,9 @@ fun ItemPrice(itemPrice: Int) {
         )
     }
 }
+
 @Composable
-fun ItemCategory(itemCategory: String,itemSubCategory: String) {
+fun ItemCategory(itemCategory: String, itemSubCategory: String) {
     Row(
         modifier = Modifier
             .padding(start = 10.dp),
@@ -135,10 +139,9 @@ fun ItemCategory(itemCategory: String,itemSubCategory: String) {
 }
 
 @Composable
-fun ItemName(itemName: String) {
+fun ItemName(itemName: String,itemCondition: Int) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
             .padding(start = 10.dp, top = 10.dp, end = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -149,5 +152,6 @@ fun ItemName(itemName: String) {
             letterSpacing = (-2).sp,
             style = MaterialTheme.typography.headlineLarge,
         )
+        ItemConditions(itemCondition)
     }
 }

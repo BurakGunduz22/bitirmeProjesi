@@ -125,7 +125,7 @@ fun ItemDescriptionSkeleton() {
 @Composable
 fun ItemLocationMapSkeleton() {
     Column {
-
+        ItemNameSkeleton()
         Box(
             modifier = Modifier
                 .fillMaxWidth()

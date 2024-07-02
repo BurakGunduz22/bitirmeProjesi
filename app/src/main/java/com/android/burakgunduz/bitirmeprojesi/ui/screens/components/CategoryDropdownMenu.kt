@@ -35,7 +35,7 @@ fun CategoryDropDownMenu(
     items: List<Any>,
     isCategorySelected: Boolean,
     nameOfDropBox: String,
-    categoryName: String
+    categoryName: String,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selected = remember { mutableStateOf(categoryName) }

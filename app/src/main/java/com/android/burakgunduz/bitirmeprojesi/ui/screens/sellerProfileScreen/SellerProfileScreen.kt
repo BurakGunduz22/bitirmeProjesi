@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -29,6 +30,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
+import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.FakeTopBar
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.ItemCard
 import com.android.burakgunduz.bitirmeprojesi.viewModels.ItemViewModel
 import com.google.firebase.storage.StorageReference
@@ -39,7 +41,8 @@ fun SellerProfileScreen(
     itemViewModel: ItemViewModel,
     storageRef: StorageReference,
     isDarkModeOn: Boolean,
-    navController: NavController
+    navController: NavController,
+    itemID : String
 ) {
     val sellerID = navBack.arguments?.getString("sellerProfileID")
     LaunchedEffect(Unit) {
@@ -56,12 +59,13 @@ fun SellerProfileScreen(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            FakeTopBar(navController = navController, screenName = "Seller Profile")
             SubcomposeAsyncImage(
                 model = userImage.value,
                 contentDescription = "ProfilePicture",
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier
-                    .size(100.dp)
+                    .size(100.dp).padding(10.dp)
                     .clip(shape = CircleShape)
             ) {
                 val state = painter.state
@@ -80,8 +84,6 @@ fun SellerProfileScreen(
                 }
             }
             Text(text = realInfo?.name ?: "Loading...")
-            Text(text = realInfo?.email ?: "Loading...")
-            Text(text = realInfo?.phoneNumber ?: "Loading...")
             if (userItems != null) {
                 LazyColumn(
                     verticalArrangement = Arrangement.Center,
@@ -113,6 +115,7 @@ fun SellerProfileScreen(
                                     itemViewModel.removeLikedItems(userInfo.value!!.value.userID, document.itemID)
                                     toggleButtonChecked.value = false
                                 },
+                                itemID == document.userID,
                             )
                         } else {
                             // Show a loading indicator while the image is loading
