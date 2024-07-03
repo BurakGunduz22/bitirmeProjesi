@@ -59,7 +59,7 @@
             android:resource="@array/preloaded_fonts" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCEsp4IZKMQdfbe_ZBnPb-xF7zuoWeXWUg" />
+            android:value="GoogleMapsAPIKEY" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/saflogo" />
