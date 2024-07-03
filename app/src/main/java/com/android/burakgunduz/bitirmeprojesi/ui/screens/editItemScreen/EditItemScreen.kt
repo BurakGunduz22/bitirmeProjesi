@@ -102,7 +102,7 @@ fun EditItemScreen(
             ) {
                 HorizontalPager(state = pagerState, userScrollEnabled = false) { page ->
                     when (page) {
-                        0 -> {
+                        1 -> {
                             ImageUploader(
                                 imageUri = itemImageList ?: MutableList(6) { Uri.EMPTY },
                                 itemViewModel = itemViewModel,
@@ -113,7 +113,7 @@ fun EditItemScreen(
                             )
                         }
 
-                        1 -> {
+                        0 -> {
                             EditItemDetails(
                                 itemDetails = itemDetailsViewModel,
                                 itemViewModel = itemViewModel,

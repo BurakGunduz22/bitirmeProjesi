@@ -265,7 +265,8 @@ fun DirectMessagingScreen(
                 userIDInfo = userIDInfo,
                 navBack = navBack,
                 viewModel = viewModel,
-                messageList = messageListEdit
+                messageList = messageListEdit,
+                navController = navController
             )
 
         }
@@ -374,7 +375,8 @@ fun MessageInputArea(
     userIDInfo: String?,
     navBack: NavBackStackEntry,
     viewModel: MessageViewModel,
-    messageList: MutableState<List<Message>?>
+    messageList: MutableState<List<Message>?>,
+    navController: NavController
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -408,7 +410,8 @@ fun MessageInputArea(
                         userIDInfo = userIDInfo,
                         navBack = navBack,
                         viewModel = viewModel,
-                        messageList = messageList
+                        messageList = messageList,
+                        navController = navController
                     )
                 }
             ),
@@ -420,7 +423,8 @@ fun MessageInputArea(
                             userIDInfo = userIDInfo,
                             navBack = navBack,
                             viewModel = viewModel,
-                            messageList = messageList
+                            messageList = messageList,
+                            navController = navController
                         )
                     },
                     modifier = Modifier.padding(end = 8.dp)
@@ -440,7 +444,8 @@ private fun sendMessage(
     userIDInfo: String?,
     navBack: NavBackStackEntry,
     viewModel: MessageViewModel,
-    messageList: MutableState<List<Message>?>
+    messageList: MutableState<List<Message>?>,
+    navController: NavController
 ) {
     val receiverID = navBack.arguments?.getString("receiverID")
     val itemID = navBack.arguments?.getString("itemID")
@@ -461,14 +466,18 @@ private fun sendMessage(
                     userID = userIDInfo,
                     conversationUserID = conversationUserID,
                     itemID = itemID,
-                    messageContext = messageToSend
+                    messageContext = messageToSend,
+                    navController = navController,
                 )
             } else {
                 viewModel.sendFirstMessage(
                     userID = userIDInfo,
                     conversationUserID = conversationUserID,
                     itemID = itemID,
-                    messageContext = messageToSend
+                    messageContext = messageToSend,
+                    onSuccess = {
+
+                    }
                 )
             }
             messageContext.value = ""

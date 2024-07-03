@@ -38,7 +38,7 @@ data class Item(
     val itemID: String = "",
     val viewCount: Int = 0,
     val likeCount: Int = 0,
-    val itemStatus: Int,
+    val itemStatus: Int = 0,
 )
 
 data class ItemCard(
@@ -382,7 +382,8 @@ class ItemViewModel : ViewModel() {
     fun saveItem(
         fileStream: MutableList<Uri>,
         itemDetails: MutableList<String>,
-        userID: String
+        userID: String,
+        onCompletion: () -> Unit // Add this parameter
     ) {
         val item = createItemFromDetails(itemDetails, userID)
         val itemIDforRef = mutableStateOf("")
@@ -405,13 +406,16 @@ class ItemViewModel : ViewModel() {
                             Log.d("PROGRESS", "Upload is $progress% done")
                         }
                 }
-
+                // Call the onCompletion callback here
+                onCompletion()
             }
             .addOnFailureListener { e ->
                 Log.w(TAG, "Error adding document", e)
+                // Call the onCompletion callback here in case of failure
+                onCompletion()
             }
-
     }
+
 
     fun addLikedItem(userID: String, itemID: String) {
         db.collection("itemsOnSale")

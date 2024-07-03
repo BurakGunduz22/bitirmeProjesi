@@ -1,21 +1,36 @@
 package com.android.burakgunduz.bitirmeprojesi.ui.screens.editItemScreen.subScreens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.android.burakgunduz.bitirmeprojesi.ui.screens.components.CategoryDropDownMenu
 import com.android.burakgunduz.bitirmeprojesi.viewModels.Item
@@ -43,25 +58,27 @@ fun EditItemDetails(
     val itemSubCategories = itemViewModel.subCategoriesList.observeAsState()
     val subCategoriesList = remember { mutableListOf<SubCategories>() }
     val focusManager = LocalFocusManager.current
+    val itemCategoryName = remember {
+        mutableStateOf(
+            itemCategories.value?.find { it.categoryID == itemDetails.itemCategory }?.categoryName
+                ?: ""
+        )
+    }
 
     LaunchedEffect(Unit) {
         itemViewModel.loadItemCategories()
     }
-    val categoryList = itemCategories.value?.map { it } ?: listOf()
 
     LaunchedEffect(itemCategory.value) {
         if (itemCategory.value.isNotEmpty()) {
             itemViewModel.loadSubItemCategories(itemCategory.value)
         }
     }
+    val categoryList = itemCategories.value?.map { it } ?: listOf()
 
     LaunchedEffect(itemSubCategories.value) {
         subCategoriesList.clear()
         subCategoriesList.addAll(itemSubCategories.value ?: listOf())
-    }
-
-    LaunchedEffect(itemCategory.value) {
-        itemSubCategory.value = "" // Reset sub-category when category changes
     }
 
     LaunchedEffect(itemSubCategory.value) {
@@ -71,36 +88,64 @@ fun EditItemDetails(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Edit Item Details",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+
+        )
         OutlinedTextField(
             value = title.value,
             onValueChange = { title.value = it },
-            label = { Text("Title") }
+            label = { Text("Title") },
+            modifier = Modifier
+                .fillMaxWidth(0.8f),
+            shape = AbsoluteRoundedCornerShape(16),
         )
         OutlinedTextField(
             value = brand.value,
             onValueChange = { brand.value = it },
-            label = { Text("Brand") }
+            label = { Text("Brand") },
+            modifier = Modifier
+                .fillMaxWidth(0.8f),
+            shape = AbsoluteRoundedCornerShape(16),
         )
-        CategoryDropDownMenu(
-            updatedData = itemCategory,
-            items = categoryList,
-            isCategorySelected = true,
-            nameOfDropBox = "Category",
-            categoryName = itemCategory.value,
-        )
-        CategoryDropDownMenu(
-            updatedData = itemSubCategory,
-            items = subCategoriesList,
-            isCategorySelected = true,
-            nameOfDropBox = "Sub-Category",
-            categoryName = itemSubCategory.value
-        )
+        // Category dropdown menu
+        if (categoryList.isNotEmpty()) {
+            CategoryDropDownMenu(
+                updatedData = itemCategory,
+                items = categoryList,
+                isCategorySelected = true,
+                nameOfDropBox = "Category",
+                categoryName = itemCategory.value,
+            )
+        } else {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+        }
+
+            CategoryDropDownMenu(
+                updatedData = itemSubCategory,
+                items = subCategoriesList,
+                isCategorySelected = true,
+                nameOfDropBox = "Sub-Category",
+                categoryName = itemSubCategory.value,
+            )
+
+
         OutlinedTextField(
             value = description.value,
             onValueChange = { description.value = it },
             label = { Text("Description") },
-            minLines = 6
+            minLines = 6,
+            modifier = Modifier.fillMaxWidth(0.8f),
+            shape = AbsoluteRoundedCornerShape(16),
         )
         OutlinedTextField(
             value = price.value,
@@ -109,11 +154,17 @@ fun EditItemDetails(
                     price.value = it
                 }
             },
-            label = { Text("Price") }
+            label = { Text("Price") },
+            modifier = Modifier
+                .fillMaxWidth(0.8f),
+            shape = AbsoluteRoundedCornerShape(16),
+            suffix = { Text("€") }
         )
         ExposedDropdownMenuBox(
             expanded = dropControl.value,
-            onExpandedChange = { dropControl.value = it }
+            onExpandedChange = { dropControl.value = it },
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
         ) {
             OutlinedTextField(
                 value = when (condition.value) {
@@ -125,11 +176,26 @@ fun EditItemDetails(
                 onValueChange = {},
                 label = { Text("Condition") },
                 readOnly = true,
-                modifier = Modifier.menuAnchor()
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(0.8f),
+                trailingIcon = {
+                    val rotation by animateFloatAsState(
+                        if (dropControl.value) 180F else 0F,
+                        label = ""
+                    )
+                    Icon(
+                        rememberVectorPainter(Icons.Default.ArrowDropDown),
+                        contentDescription = "Dropdown Arrow",
+                        Modifier.rotate(rotation),
+                    )
+                },
+                shape = AbsoluteRoundedCornerShape(16),
             )
             ExposedDropdownMenu(
                 expanded = dropControl.value,
-                onDismissRequest = { dropControl.value = false }
+                onDismissRequest = { dropControl.value = false },
+                modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 DropdownMenuItem(
                     text = { Text("New") },
@@ -171,3 +237,4 @@ fun EditItemDetails(
         }
     }
 }
+

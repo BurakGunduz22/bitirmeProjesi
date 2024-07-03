@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavController
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
@@ -34,13 +35,15 @@ class MessageViewModel : ViewModel() {
         userID: String,
         conversationUserID: String,
         itemID: String,
-        messageContext: String
+        messageContext: String,
+        onSuccess: () -> Unit  // Add this parameter
     ) {
         val sendingMessage = Message(
             senderID = userID,
             receiverID = conversationUserID,
             itemID = itemID,
-            message = messageContext
+            message = messageContext,
+            timestamp = Timestamp.now()
         )
         Log.d("First Message", "Messages: $sendingMessage")
         db.collection("messages")
@@ -61,16 +64,16 @@ class MessageViewModel : ViewModel() {
                                             "First Message",
                                             "Message counter incremented successfully."
                                         )
+                                        onSuccess()  // Call the onSuccess callback
                                     }
                                     .addOnFailureListener { e ->
                                         Log.e("First Message", "Error incrementing message counter.", e)
                                     }
+                            } else {
+                                Log.e("First Message", "Document does not exist.")
                             }
-                            else {
-                                Log.e("First Message", "Document does not exist.")}
                         }
                     }
-
             }
     }
 
@@ -78,7 +81,8 @@ class MessageViewModel : ViewModel() {
         userID: String,
         conversationUserID: String,
         itemID: String,
-        messageContext: String
+        messageContext: String,
+        navController: NavController
     ) {
         val sendingMessage = Message(
             senderID = userID,
@@ -123,6 +127,8 @@ class MessageViewModel : ViewModel() {
                                 .collection("messageContext")
                                 .add(sendingMessage)
                             Log.e("First Message", "Messages: $it")
+                            Log.e("Şakaaa","DSAdsadsa")
+                            navController.popBackStack()
                         }
                 }
             }

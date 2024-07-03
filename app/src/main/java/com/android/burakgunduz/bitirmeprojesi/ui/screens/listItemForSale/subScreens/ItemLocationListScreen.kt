@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBackIos
 import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.outlined.NotListedLocation
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +74,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-@SuppressLint("MutableCollectionMutableState", "CoroutineCreationDuringComposition")
 @Composable
 fun ListItemLocation(
     itemDetails: MutableList<String>,
@@ -99,6 +99,8 @@ fun ListItemLocation(
 
     val latLng = remember { mutableStateOf<LatLng?>(null) }
     val isMet = remember { mutableStateOf(false) }
+    val isLoading = remember { mutableStateOf(false) } // Loading state
+
     val cameraPositionState: CameraPositionState = rememberCameraPositionState {
         latLng.value?.let {
             position = CameraPosition.builder()
@@ -190,6 +192,10 @@ fun ListItemLocation(
             }
         }
 
+        if (isLoading.value) {
+            CircularProgressIndicator() // Show loading spinner
+        }
+
         ProgressBar(
             isProgressRequirementsMet = isMet.value,
             currentIcon = Icons.AutoMirrored.Outlined.NotListedLocation,
@@ -200,8 +206,11 @@ fun ListItemLocation(
                     itemDetails.add(it.latitude.toString())
                     itemDetails.add(it.longitude.toString())
                 }
-                viewModel.saveItem(images, itemDetails, userID)
-                navController.navigate("feedScreenNav/${userID}")
+                isLoading.value = true // Show loading spinner
+                viewModel.saveItem(images, itemDetails, userID) {
+                    isLoading.value = false // Hide loading spinner
+                    navController.navigate("feedScreenNav/${userID}")
+                }
             },
             previousScreen = {
                 screenNumber.value = 1
@@ -210,6 +219,7 @@ fun ListItemLocation(
         )
     }
 }
+
 
 @Composable
 fun LocationButton(

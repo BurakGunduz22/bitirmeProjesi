@@ -17,13 +17,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,6 +63,7 @@ fun UserListedItemCard(
 
     // Observe the loading state
     val isDeleting by itemViewModel.isDeleting.collectAsState()
+    val showDialog = remember { mutableStateOf(false) }
 
     ElevatedCard(
         modifier = Modifier
@@ -77,19 +83,16 @@ fun UserListedItemCard(
                     contentDescription = "Item Image",
                     contentScale = ContentScale.FillWidth,
                     alignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     val state = painter.state
                     when (state) {
                         is AsyncImagePainter.State.Loading -> {
                             CircularProgressIndicator()
                         }
-
                         is AsyncImagePainter.State.Empty, is AsyncImagePainter.State.Error -> {
-                            Icon(imageVector = Icons.Outlined.Error, contentDescription = "Person")
+                            Icon(imageVector = Icons.Outlined.Error, contentDescription = "Error")
                         }
-
                         else -> {
                             SubcomposeAsyncImageContent()
                         }
@@ -108,7 +111,6 @@ fun UserListedItemCard(
 
                     val itemViewCount = itemCardValue.viewCount.toString()
                     val itemLikeCount = itemCardValue.likeCount.toString()
-                    val messageCount = 1500
 
                     Column(
                         modifier = Modifier
@@ -131,23 +133,43 @@ fun UserListedItemCard(
                         }
 
                     }
-                        EditButton(
-                            onClick = { navController.navigate("editItemScreenNav/${itemCardValue.itemID}") },
-                            isDarkModeOn = isDarkModeOn
-                        )
-                        DeleteButton(
-                            onClick = {
-                                // Perform deletion and refresh the page
-                                itemViewModel.deleteItem(itemCardValue.itemID)
-                                itemsLoaded.value = true// Refresh the item list page
-                            },
-                            isDarkModeOn = isDarkModeOn,
-                            isLoading = isDeleting  // Pass the loading state
-                        )
-
+                    EditButton(
+                        onClick = { navController.navigate("editItemScreenNav/${itemCardValue.itemID}") },
+                        isDarkModeOn = isDarkModeOn
+                    )
+                    DeleteButton(
+                        onClick = { showDialog.value = true },
+                        isDarkModeOn = isDarkModeOn,
+                        isLoading = isDeleting  // Pass the loading state
+                    )
                 }
             }
         }
     }
-}
 
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDialog.value = false },
+            title = { Text("Delete Item") },
+            text = { Text("Are you sure you want to delete this item?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDialog.value = false
+                        itemViewModel.deleteItem(itemCardValue.itemID)
+                        itemsLoaded.value = false
+                    }
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDialog.value = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
